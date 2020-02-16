@@ -73,10 +73,10 @@ def main():
     startdate = datetime.datetime(year, month, 1)
     enddate = datetime.datetime(year, month, monthrange(year, month)[1])
 
-    filedatestr = f"{startdate.strftime("%Y%m%d")}_{enddate.strftime("%Y%m%d")}"
+    filedatestr = f"{startdate.strftime('%Y%m%d')}_{enddate.strftime('%Y%m%d')}"
 
     sstpath = config.get('Input', 'SST')
-    sstfile = pjoin(sstpath, year, f'SSTK_era5_global_{filedatestr}.nc' )
+    sstfile = pjoin(sstpath, f'{year}', f'SSTK_era5_global_{filedatestr}.nc' )
     sstobj = nctools.ncLoadFile(sstfile)
     sst = nctools.ncGetData(sstobj,'sst')
 
