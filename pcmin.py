@@ -1,73 +1,19 @@
 """
 :module: pcmin
 
+A python implementation of Kerry Emanuel's potential intensity algorithm
+for tropical cyclones.
+
 
 """
 
 import logging
 
 import numpy as np
+import metutils
 
 EPS = 0.622
 gPressureUnits = "hPa"
-
-def satVapPr(temp, units_vp=gPressureUnits):
-    """
-    Saturation vapour pressure from temperature in degrees celsius.
-
-    :param float temp: Temperature (degrees celsius).
-    :param str units_vp: Units of the vapour pressure to return.
-                         Default is ``gPressureUnits``.
-
-    :returns: saturation vapour pressure in the specified or default units.
-
-    .. note::
-       Calculation is in kPa with a conversion at the end to the
-       required units.
-
-
-    Example::
-
-        >>> from metutils import satVapPr
-        >>> satVapPr(25.)
-        31.697124349060619
-
-    """
-    vp = np.exp(((16.78 * temp) - 116.9) / (temp + 237.3))
-    vp = vp / 10.
-
-    return vp
-
-
-def vapPrToMixRat(es, prs):
-    """
-    Calculate mixing ratio from vapour pressure
-    In this function, we (mis)use the symbol es for vapour pressure,
-    when it correctly represents saturation vapour pressure.
-    The function can be used for both.
-
-    :param float es: Vapour pressure.
-    :param float prs: Air pressure (hPa).
-
-    :returns: Mixing ratio.
-    :rtype: float
-
-    """
-    rat = EPS * es / (prs - es)
-    return rat
-
-def mixRatToVapPr(rat, prs):
-    """
-    Calculate vapour pressure from mixing ratio.
-
-    :param float rat: Mixing ratio (g/kg).
-    :param float prs: Air pressure (hPa).
-
-    :returns: Vapour pressure.
-    :rtype: float
-    """
-    es = rat * prs / (EPS + rat)
-    return es
 
 def pcmin(sst, psl, p, t, r):
     """
@@ -117,7 +63,7 @@ def pcmin(sst, psl, p, t, r):
     except AssertionError:
         raise ValueError(f"SST is too low: {sst}")
     
-    es0 = satVapPr(sst)
+    es0 = metutils.satVapPr(sst)
 
     try:
         assert(t.min() > 0)
@@ -223,7 +169,7 @@ def cape(tp, rp, pp, t, r, p, sigma):
 
     # Define parcel quantities
     tpc = tp - 273.15
-    esp = satVapPr(tpc)
+    esp = metutils.satVapPr(tpc)
     evp = rp * pp / (eps + rp)
     rh = min(evp / esp, 1.0)
     alv = alv0 + cpvmcl * tpc
@@ -248,8 +194,8 @@ def cape(tp, rp, pp, t, r, p, sigma):
             # Parcel quantities above LCL
             tgnew = t[j]
             tjc = t[j] - 273.15
-            es = satVapPr(tjc)
-            rg = vapPrToMixRat(es, p[j])
+            es = metutils.satVapPr(tjc)
+            rg = metutils.vapPrToMixRat(es, p[j])
 
             # Iteratively calculate lifted parcel temperature and mixing ratio
             # For reversible ascent
@@ -259,8 +205,8 @@ def cape(tp, rp, pp, t, r, p, sigma):
             while (np.abs(tgnew - tg)) > 0.0:
                 tg = tgnew
                 tc = tg - 273.15
-                enew = satVapPr(tc)
-                rg = vapPrToMixRat(enew, p[j])
+                enew = metutils.satVapPr(tc)
+                rg = metutils.vapPrToMixRat(enew, p[j])
 
                 nc += 1
 
@@ -269,7 +215,7 @@ def cape(tp, rp, pp, t, r, p, sigma):
 
                 alv = alv0 + cpvmcl * (tg - 273.15)
                 sl = (cpd + rp * cl + alv * alv * rg/(rv * tg * tg)) / tg
-                em = mixRatToVapPr(rg, p[j])
+                em = metutils.mixRatToVapPr(rg, p[j])
                 sg = (cpd + rp * cl) * np.log(tg) - rd * np.log(p[j] - em) + alv * rg / tg
                 if nc < 3:
                     ap = 0.3
