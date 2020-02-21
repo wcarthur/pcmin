@@ -2,3 +2,7 @@ __pycache__/
 
 *.pyd
 *.pyc
+
+# Log files
+*.log
+*.log-*
