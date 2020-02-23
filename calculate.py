@@ -136,14 +136,13 @@ def main():
     # pressure variables are only over Australian region
     LOGGER.info("Getting intersection of grids")
     lonx, sstidx, varidx = np.intersect1d(sstlon, tlon, return_indices=True)
-    laty, sstidy, varidy = np.intersect1d(sstlat, tlat, return_indices=True)
-
+    laty, sstidy, varidy = np.intersect1d(sstlat, tlat[::-1], return_indices=True)
+    
     nx = len(varidx)
     ny = len(varidy)
     LOGGER.info("Loading and converting SST and SLP data")
     sst = metutils.convert(sstvar[:, sstidy, sstidx], sstvar.units, 'C')
     slp = metutils.convert(slpvar[:, sstidy, sstidx], slpvar.units, 'hPa')
-
 
     times = nctools.ncGetTimes(nctools.ncLoadFile(tfile))
     nt = len(times)
@@ -163,7 +162,6 @@ def main():
 
     pmin = np.zeros(sst.shape)
     vmax = np.zeros(sst.shape)
-
     status = MPI.Status()
     work_tag = 0
     result_tag = 1
@@ -173,7 +171,7 @@ def main():
         p = comm.size - 1
         for d in range(1, comm.size):
             if w < nt:
-                LOGGER.debug(f"Sending time {w} to node {d}")
+                LOGGER.info(f"Sending time {w} to node {d}")
                 comm.send(w, dest=d, tag=work_tag)
                 w += 1
             else:
@@ -184,10 +182,11 @@ def main():
         while(terminated < p):
             result, tdx = comm.recv(source=MPI.ANY_SOURCE, status=status, tag=MPI.ANY_TAG)
             pmin[tdx, :, :], vmax[tdx, :, :] = result
+            LOGGER.info(f"Mean PI: {np.nanmean(vmax[tdx, :, :])} m/s")
             d = status.source
 
             if w < nt:
-                LOGGER.debug(f"Sending time {w} to node {d}")
+                LOGGER.info(f"Sending time {w} to node {d}")
                 comm.send(w, dest=d, tag=status.tag)
                 w += 1
             else:
@@ -219,7 +218,7 @@ def main():
         os.makedirs(outputPath)
     except:
         pass
-    outputFile = pjoin(outputPath, 'pcmin.nc')
+    outputFile = pjoin(outputPath, f'pcmin.{filedatestr}.nc')
     saveData(outputFile, pmin, vmax, lonx, laty, times)
 
     LOGGER.info("Finished calculating potential intensity")
@@ -235,9 +234,9 @@ def calculate(sst, slp, pp, tt, rr, levels):
         for ii in range(nx):
             pmin[jj, ii], vmax[jj, ii], ifl = pcmin(sst[jj, ii],
                                                     slp[jj, ii],
-                                                    pp[:, jj, ii],
-                                                    tt[:, jj, ii],
-                                                    rr[:,jj, ii],
+                                                    pp[::-1, jj, ii],
+                                                    tt[::-1, jj, ii],
+                                                    rr[::-1, jj, ii],
                                                     len(levels),
                                                     len(levels))
     return pmin, vmax
@@ -258,7 +257,7 @@ def saveData(outputFile, pmin, vmax, lon, lat, times):
                 }
             },
             1: {
-                'name': 'lat',
+                'name': 'latitude',
                 'values': lat,
                 'dtype': 'float64',
                 'atts': {
@@ -269,7 +268,7 @@ def saveData(outputFile, pmin, vmax, lon, lat, times):
                 }
             },
             2: {
-                'name': 'lon',
+                'name': 'longitude',
                 'values': lon,
                 'dtype': 'float64',
                 'atts': {
@@ -283,7 +282,7 @@ def saveData(outputFile, pmin, vmax, lon, lat, times):
     variables = {
             0: {
                 'name': 'pmin',
-                'dims': ('time', 'lat', 'lon'),
+                'dims': ('time', 'latitude', 'longitude'),
                 'values': pmin,
                 'dtype': 'float64',
                 'atts': {
@@ -295,7 +294,7 @@ def saveData(outputFile, pmin, vmax, lon, lat, times):
             },
             1: {
                 'name': 'vmax',
-                'dims': ('time', 'lat', 'lon'),
+                'dims': ('time', 'latitude', 'longitude'),
                 'values': vmax,
                 'dtype': 'float64',
                 'atts': {
