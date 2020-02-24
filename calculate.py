@@ -87,139 +87,150 @@ def main():
     LOGGER.info(f"Started {sys.argv[0]} (pid {os.getpid()})")
     LOGGER.info(f"Log file: {logfile} (detail level {logLevel})")
 
-    year = 2019
-    month = 12
-    LOGGER.info(f"Processing {year}-{month}")
-    startdate = datetime.datetime(year, month, 1)
-    enddate = datetime.datetime(year, month, monthrange(year, month)[1])
-
-    filedatestr = f"{startdate.strftime('%Y%m%d')}_{enddate.strftime('%Y%m%d')}"
-
     tpath = config.get('Input', 'Temp')
-    tfile = pjoin(tpath, f'{year}', f'T_era5_aus_{filedatestr}.nc')
-    tobj = nctools.ncLoadFile(tfile)
-    tvar = nctools.ncGetVar(tobj, 't')
-    tvar.set_auto_maskandscale(True)
     rpath = config.get('Input', 'Humidity')
-    rfile = pjoin(rpath, f'{year}', f'R_era5_aus_{filedatestr}.nc')
-    robj = nctools.ncLoadFile(rfile)
-    rvar = nctools.ncGetVar(robj, 'r')
-    rvar.set_auto_maskandscale(True)
-    # This is actually relative humidity, we need to convert to mixing ratio
-    # Calculate mixing ratio - this function returns mixing ratio in g/kg
-
-    # Dimensions need to come from the pressure files
-    # These have been clipped to the Australian region, so contain
-    # a subset of the global data. The SST and MSLP data
-    # are then clipped to the same domain
-    tlon = nctools.ncGetDims(tobj, 'longitude')
-    tlat = nctools.ncGetDims(tobj, 'latitude')
-
-
-    LOGGER.info(f"Loading SST data")
     sstpath = config.get('Input', 'SST')
-    sstfile = pjoin(sstpath, f'{year}', f'SSTK_era5_global_{filedatestr}.nc' )
-    sstobj = nctools.ncLoadFile(sstfile)
-    sstvar = nctools.ncGetVar(sstobj,'sst')
-    sstvar.set_auto_maskandscale(True)
-    sstlon = nctools.ncGetDims(sstobj, 'longitude')
-    sstlat = nctools.ncGetDims(sstobj, 'latitude')
-
-    LOGGER.info("Loading SLP data")
     slppath = config.get('Input', 'SLP')
-    slpfile = pjoin(slppath, f'{year}', f'MSL_era5_global_{filedatestr}.nc')
-    slpobj = nctools.ncLoadFile(slpfile)
-    slpvar = nctools.ncGetVar(slpobj, 'msl')
-    slpvar.set_auto_maskandscale(True)
 
-    # In the ERA5 data on NCI, surface variables are global, 
-    # pressure variables are only over Australian region
-    LOGGER.info("Getting intersection of grids")
-    lonx, sstidx, varidx = np.intersect1d(sstlon, tlon, return_indices=True)
-    laty, sstidy, varidy = np.intersect1d(sstlat, tlat[::-1], return_indices=True)
-    
-    nx = len(varidx)
-    ny = len(varidy)
-    LOGGER.info("Loading and converting SST and SLP data")
-    sst = metutils.convert(sstvar[:, sstidy, sstidx], sstvar.units, 'C')
-    slp = metutils.convert(slpvar[:, sstidy, sstidx], slpvar.units, 'hPa')
+    year = 2017
+    for month in range(1, 13):
+        LOGGER.info(f"Processing {year}-{month}")
+        startdate = datetime.datetime(year, month, 1)
+        enddate = datetime.datetime(year, month, monthrange(year, month)[1])
 
-    times = nctools.ncGetTimes(nctools.ncLoadFile(tfile))
-    nt = len(times)
-    LOGGER.debug(f"There are {nt} times in the data file")
+        filedatestr = f"{startdate.strftime('%Y%m%d')}_{enddate.strftime('%Y%m%d')}"
 
-    levels = nctools.ncGetDims(nctools.ncLoadFile(tfile), 'level')
-    nz = len(levels)
-    LOGGER.debug(f"There are {nz} vertical levels in the data file")
+        tfile = pjoin(tpath, f'{year}', f'T_era5_aus_{filedatestr}.nc')
+        tobj = nctools.ncLoadFile(tfile)
+        tvar = nctools.ncGetVar(tobj, 't')
+        tvar.set_auto_maskandscale(True)
+        rfile = pjoin(rpath, f'{year}', f'R_era5_aus_{filedatestr}.nc')
+        robj = nctools.ncLoadFile(rfile)
+        rvar = nctools.ncGetVar(robj, 'r')
+        rvar.set_auto_maskandscale(True)
+        # This is actually relative humidity, we need to convert to mixing ratio
+        # Calculate mixing ratio - this function returns mixing ratio in g/kg
 
-    # Create an array of the pressure variable that 
-    # matches the shape of the temperature and mixing ratio
-    # variables.
-    LOGGER.info("Creating temporary pressure array")
-    pp = np.ones((nz, ny, nx))
-    ppT = pp.T
-    ppT *= levels
+        # Dimensions need to come from the pressure files
+        # These have been clipped to the Australian region, so contain
+        # a subset of the global data. The SST and MSLP data
+        # are then clipped to the same domain
+        tlon = nctools.ncGetDims(tobj, 'longitude')
+        tlat = nctools.ncGetDims(tobj, 'latitude')
 
-    pmin = np.zeros(sst.shape)
-    vmax = np.zeros(sst.shape)
-    status = MPI.Status()
-    work_tag = 0
-    result_tag = 1
-    LOGGER.info("Calculating potential intensity")
-    if (comm.rank == 0) and (comm.size > 1):
-        w = 0
-        p = comm.size - 1
-        for d in range(1, comm.size):
-            if w < nt:
-                LOGGER.info(f"Sending time {w} to node {d}")
-                comm.send(w, dest=d, tag=work_tag)
-                w += 1
-            else:
-                comm.send(None, dest=d, tag=work_tag)
-                p = w
 
-        terminated = 0
-        while(terminated < p):
-            result, tdx = comm.recv(source=MPI.ANY_SOURCE, status=status, tag=MPI.ANY_TAG)
-            pmin[tdx, :, :], vmax[tdx, :, :] = result
-            LOGGER.info(f"Mean PI: {np.nanmean(vmax[tdx, :, :])} m/s")
-            d = status.source
+        LOGGER.info(f"Loading SST data")
+        sstfile = pjoin(sstpath, f'{year}', f'SSTK_era5_global_{filedatestr}.nc' )
+        sstobj = nctools.ncLoadFile(sstfile)
+        sstvar = nctools.ncGetVar(sstobj,'sst')
+        sstvar.set_auto_maskandscale(True)
+        sstlon = nctools.ncGetDims(sstobj, 'longitude')
+        sstlat = nctools.ncGetDims(sstobj, 'latitude')
 
-            if w < nt:
-                LOGGER.info(f"Sending time {w} to node {d}")
-                comm.send(w, dest=d, tag=status.tag)
-                w += 1
-            else:
-                comm.send(None, dest=d, tag=status.tag)
-                terminated += 1
-    elif (comm.size > 1) and (comm.rank != 0):
+        LOGGER.info("Loading SLP data")
+        slpfile = pjoin(slppath, f'{year}', f'MSL_era5_global_{filedatestr}.nc')
+        slpobj = nctools.ncLoadFile(slpfile)
+        slpvar = nctools.ncGetVar(slpobj, 'msl')
+        slpvar.set_auto_maskandscale(True)
+
+        # In the ERA5 data on NCI, surface variables are global, 
+        # pressure variables are only over Australian region
+        LOGGER.info("Getting intersection of grids")
+        lonx, sstidx, varidx = np.intersect1d(sstlon, tlon, return_indices=True)
+        laty, sstidy, varidy = np.intersect1d(sstlat, tlat[::-1], return_indices=True)
+        
+        nx = len(varidx)
+        ny = len(varidy)
+        LOGGER.info("Loading and converting SST and SLP data")
+        sst = metutils.convert(sstvar[:, sstidy, sstidx], sstvar.units, 'C')
+        slp = metutils.convert(slpvar[:, sstidy, sstidx], slpvar.units, 'hPa')
+
+        times = nctools.ncGetTimes(nctools.ncLoadFile(tfile))
+        nt = len(times)
+        LOGGER.debug(f"There are {nt} times in the data file")
+
+        levels = nctools.ncGetDims(nctools.ncLoadFile(tfile), 'level')
+        nz = len(levels)
+        LOGGER.debug(f"There are {nz} vertical levels in the data file")
+
+        # Create an array of the pressure variable that 
+        # matches the shape of the temperature and mixing ratio
+        # variables.
+        LOGGER.info("Creating temporary pressure array")
+        pp = np.ones((nz, ny, nx))
+        ppT = pp.T
+        ppT *= levels
+
+        pmin = np.zeros(sst.shape)
+        vmax = np.zeros(sst.shape)
         status = MPI.Status()
-        W = None
-        while(True):
-            W = comm.recv(source=0, tag=work_tag, status=status)
-            if W is None:
-                LOGGER.debug("No work to be done on this processor: {0}".format(comm.rank))
-                break
-            LOGGER.debug(f"Processing time {times[W]} on node {comm.rank}")
-            t = metutils.convert(tvar[W, :, varidy, varidx], tvar.units, 'C')
-            r = metutils.rHToMixRat(rvar[W, :, varidy, varidx], t, pp, 'C')
-            r = np.where(r < 0, 0, r)
-            results = calculate(sst[W,:,:], slp[W, :, :], pp, t, r, levels)
-            LOGGER.debug(f"Finished time {times[W]} on node {comm.rank}")
-            comm.send((results, W), dest=0, tag=status.tag)
+        work_tag = 0
+        result_tag = 1
+        LOGGER.info("Calculating potential intensity")
+        if (comm.rank == 0) and (comm.size > 1):
+            w = 0
+            p = comm.size - 1
+            for d in range(1, comm.size):
+                if w < nt:
+                    LOGGER.info(f"Sending time {w} to node {d}")
+                    comm.send(w, dest=d, tag=work_tag)
+                    w += 1
+                else:
+                    comm.send(None, dest=d, tag=work_tag)
+                    p = w
+
+            terminated = 0
+            while(terminated < p):
+                result, tdx = comm.recv(source=MPI.ANY_SOURCE, status=status, tag=MPI.ANY_TAG)
+                pmin[tdx, :, :], vmax[tdx, :, :] = result
+                LOGGER.debug(f"Mean PI: {np.nanmean(vmax[tdx, :, :])} m/s")
+                d = status.source
+
+                if w < nt:
+                    LOGGER.info(f"Sending time {times[w]} to node {d}")
+                    comm.send(w, dest=d, tag=status.tag)
+                    w += 1
+                else:
+                    # Exhausted all times, send empty packet:
+                    comm.send(None, dest=d, tag=status.tag)
+                    terminated += 1
+        elif (comm.size > 1) and (comm.rank != 0):
+            status = MPI.Status()
+            W = None
+            while(True):
+                W = comm.recv(source=0, tag=work_tag, status=status)
+                if W is None:
+                    # Received an empty packet, so no work required
+                    LOGGER.debug("No work to be done on this processor: {0}".format(comm.rank))
+                    break
+                LOGGER.debug(f"Processing time {times[W]} on node {comm.rank}")
+                t = metutils.convert(tvar[W, :, varidy, varidx], tvar.units, 'C')
+                r = metutils.rHToMixRat(rvar[W, :, varidy, varidx], t, pp, 'C')
+                r = np.where(r < 0, 0, r)
+                results = calculate(sst[W,:,:], slp[W, :, :], pp, t, r, levels)
+                LOGGER.debug(f"Finished time {times[W]} on node {comm.rank}")
+                comm.send((results, W), dest=0, tag=status.tag)
+        elif (comm.size==1) and (comm.rank == 0):
+            # We're working on a single processor:
+            for tdx in range(nt):
+                LOGGER.debug(f"Processing time {times[W]}")
+                t = metutils.convert(tvar[tdx, :, varidy, varidx], tvar.units, 'C')
+                r = metutils.rHToMixRat(rvar[tdx, :, varidy, varidx], t, pp, 'C')
+                r = np.where(r < 0, 0, r)
+                pmin[tdx, :, :], vmax[tdx, :, :] = calculate(sst[tdx,:,:], slp[tdx, :, :], pp, t, r, levels)
 
 
-    if comm.rank == 0:
-        sleep(5)
-    comm.Barrier()
-    LOGGER.info("Saving data")
-    outputPath = config.get('Output', 'Path')
-    try:
-        os.makedirs(outputPath)
-    except:
-        pass
-    outputFile = pjoin(outputPath, f'pcmin.{filedatestr}.nc')
-    saveData(outputFile, pmin, vmax, lonx, laty, times)
+        if comm.rank == 0:
+            sleep(5)
+        comm.Barrier()
+        LOGGER.info("Saving data")
+        outputPath = config.get('Output', 'Path')
+        try:
+            os.makedirs(outputPath)
+        except:
+            pass
+        outputFile = pjoin(outputPath, f'pcmin.{filedatestr}.nc')
+        saveData(outputFile, pmin, vmax, lonx, laty, times)
 
     LOGGER.info("Finished calculating potential intensity")
 
@@ -289,7 +300,7 @@ def saveData(outputFile, pmin, vmax, lon, lat, times):
                     'long_name': 'minimum central pressure',
                     'standard_name': 'air_pressure_at_mean_sea_level',
                     'units': 'hPa',
-                    'valid_range': (800., 1040.)
+                    'valid_range': (700., 1040.)
                 }
             },
             1: {
