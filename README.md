@@ -33,12 +33,13 @@ for a basic description of command line arguments.
 
 To run in a parallel environment:
 
-`mpirun -np <ncpus> python2 calculate.py -c calculate.ini -y <year>`
+`mpirun -np <ncpus> python calculate.py -c calculate.ini -y <year>`
 
 
 
 ### Links
-Reference: https://emanuel.mit.edu/limits-hurricane-intensity 
-Code: ftp://texmex.mit.edu/pub/emanuel/TCMAX/
-ERA5 data: https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5 
-Reanalysis project (ub4): https://my.nci.org.au/mancini/project/ub4
+
+* Reference: https://emanuel.mit.edu/limits-hurricane-intensity 
+* Code: ftp://texmex.mit.edu/pub/emanuel/TCMAX/
+* ERA5 data: https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5 
+* Reanalysis project (ub4): https://my.nci.org.au/mancini/project/ub4
