@@ -37,6 +37,8 @@ def main():
     p.add_argument('-v', '--verbose',
                    help="Verbose output", 
                    action='store_true')
+    p.add_argument('-y', '--year', help="Year to process (1979-2019)")
+
     args = p.parse_args()
 
     configFile = args.config_file
@@ -92,7 +94,11 @@ def main():
     sstpath = config.get('Input', 'SST')
     slppath = config.get('Input', 'SLP')
 
-    year = 2017
+    if args.year:
+        year = int(args.year)
+    else:
+        year = 2015
+
     for month in range(1, 13):
         LOGGER.info(f"Processing {year}-{month}")
         startdate = datetime.datetime(year, month, 1)
@@ -101,10 +107,24 @@ def main():
         filedatestr = f"{startdate.strftime('%Y%m%d')}_{enddate.strftime('%Y%m%d')}"
 
         tfile = pjoin(tpath, f'{year}', f'T_era5_aus_{filedatestr}.nc')
+        try:
+            assert(os.path.isfile(tfile))
+        except AssertionError:
+            LOGGER.warn(f"Input file is missing: {tfile}")
+            LOGGER.warn(f"Skipping month {month}")
+            continue
+
         tobj = nctools.ncLoadFile(tfile)
         tvar = nctools.ncGetVar(tobj, 't')
         tvar.set_auto_maskandscale(True)
+
         rfile = pjoin(rpath, f'{year}', f'R_era5_aus_{filedatestr}.nc')
+        try:
+            assert(os.path.isfile(rfile))
+        except AssertionError:
+            LOGGER.warn(f"Input file is missing: {rfile}")
+            LOGGER.warn(f"Skipping month {month}")
+            continue
         robj = nctools.ncLoadFile(rfile)
         rvar = nctools.ncGetVar(robj, 'r')
         rvar.set_auto_maskandscale(True)
@@ -121,6 +141,13 @@ def main():
 
         LOGGER.info(f"Loading SST data")
         sstfile = pjoin(sstpath, f'{year}', f'SSTK_era5_global_{filedatestr}.nc' )
+        try:
+            assert(os.path.isfile(sstfile))
+        except AssertionError:
+            LOGGER.warn(f"Input file is missing: {sstfile}")
+            LOGGER.warn(f"Skipping month {month}")
+            continue
+
         sstobj = nctools.ncLoadFile(sstfile)
         sstvar = nctools.ncGetVar(sstobj,'sst')
         sstvar.set_auto_maskandscale(True)
@@ -129,6 +156,12 @@ def main():
 
         LOGGER.info("Loading SLP data")
         slpfile = pjoin(slppath, f'{year}', f'MSL_era5_global_{filedatestr}.nc')
+        try:
+            assert(os.path.isfile(slpfile))
+        except AssertionError:
+            LOGGER.warn(f"Input file is missing: {slpfile}")
+            LOGGER.warn(f"Skipping month {month}")
+            continue
         slpobj = nctools.ncLoadFile(slpfile)
         slpvar = nctools.ncGetVar(slpobj, 'msl')
         slpvar.set_auto_maskandscale(True)
@@ -172,7 +205,7 @@ def main():
             p = comm.size - 1
             for d in range(1, comm.size):
                 if w < nt:
-                    LOGGER.info(f"Sending time {w} to node {d}")
+                    LOGGER.debug(f"Sending time {w} to node {d}")
                     comm.send(w, dest=d, tag=work_tag)
                     w += 1
                 else:
@@ -187,7 +220,7 @@ def main():
                 d = status.source
 
                 if w < nt:
-                    LOGGER.info(f"Sending time {times[w]} to node {d}")
+                    LOGGER.debug(f"Sending time {times[w]} to node {d}")
                     comm.send(w, dest=d, tag=status.tag)
                     w += 1
                 else:
@@ -223,7 +256,7 @@ def main():
         if comm.rank == 0:
             sleep(5)
         comm.Barrier()
-        LOGGER.info("Saving data")
+        LOGGER.info(f"Saving data for month: {month}")
         outputPath = config.get('Output', 'Path')
         try:
             os.makedirs(outputPath)
