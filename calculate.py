@@ -28,7 +28,7 @@ from parallel import attemptParallel, disableOnWorkers
 LOGGER = logging.getLogger()
 
 r = Repo('')
-commit = r.commit('HEAD')
+commit = str(r.commit('HEAD'))
 
 def main():
     """
