@@ -17,7 +17,7 @@ Note also the pressure level data is ordered from lowest pressure to highest pre
 
 ### Installation
 
-We use the standard Python setup tools to build the extension, making use of the numpy.f2py module to automatically wrap the FORTRAN code with a Python interface
+We use the standard Python setup tools to build the extension, making use of the `numpy.f2py` module to automatically wrap the FORTRAN code with a Python interface
 
 `python setup.py install` 
 
@@ -33,7 +33,23 @@ for a basic description of command line arguments.
 
 To run in a parallel environment:
 
-`mpirun -np <ncpus> python calculate.py -c calculate.ini -y <year>`
+```shell
+mpirun -np <ncpus> python calculate.py -c calculate.ini -y <year>
+```
+
+`calc_pi.sh` is a shell script that loops through the available years and calculates daily PI values. It's a self-submitting script that runs the above command line, so each year is completed as a separate job. This reduces the walltime of submitted jobs to within queue limits. 
+
+```shell
+qsub -v NJOB=1,NJOBS=41,YEAR=1979 calc_pi.sh
+``` 
+
+
+### Averaging data
+
+There are also a couple of shell scripts, built around either `cdo` or `nco`, to calculate monthly means and daily long term means. Again, these are intended for use on the NCI's gadi platform (and using the PBS queuing system), so your mileage may vary.
+
+As a general rule, the `nco` tools are faster to calculate means, etc., but `cdo` provides a more intuitive command line experience, especially when calculating statistics other than simple means.
+
 
 
 
@@ -43,3 +59,5 @@ To run in a parallel environment:
 * Code: ftp://texmex.mit.edu/pub/emanuel/TCMAX/
 * ERA5 data: https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5 
 * Reanalysis project (ub4): https://my.nci.org.au/mancini/project/ub4
+* CDO (Climate Data Operators): https://www.mpimet.mpg.de/cdo/
+* NCO (NetCDF Operators): http://nco.sourceforge.net/
