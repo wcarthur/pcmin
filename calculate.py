@@ -18,6 +18,8 @@ from os.path import join as pjoin, realpath, isdir, dirname, splitext
 import numpy as np
 from netCDF4 import Dataset
 
+from git import Repo
+
 import metutils
 import nctools
 from pcmin import pcmin
@@ -25,6 +27,8 @@ from parallel import attemptParallel, disableOnWorkers
 
 LOGGER = logging.getLogger()
 
+r = Repo('')
+commit = r.commit('HEAD')
 
 def main():
     """
@@ -88,6 +92,7 @@ def main():
 
     LOGGER.info(f"Started {sys.argv[0]} (pid {os.getpid()})")
     LOGGER.info(f"Log file: {logfile} (detail level {logLevel})")
+    LOGGER.info(f"Code version: f{commit}")
 
     tpath = config.get('Input', 'Temp')
     rpath = config.get('Input', 'Humidity')
@@ -355,6 +360,7 @@ def saveData(outputFile, pmin, vmax, lon, lat, times):
                
     gatts = {
         'history': history,
+        'version': commit,
     }
 
     nctools.ncSaveGrid(outputFile, dimensions, variables, nodata=-9999,

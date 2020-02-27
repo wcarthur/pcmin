@@ -8,3 +8,4 @@ __pycache__/
 # Log files
 *.log
 *.log-*
+*.o[0-9]*

@@ -14,6 +14,7 @@ Note also the pressure level data is ordered from lowest pressure to highest pre
 * numpy
 * cftime
 * mpi4py
+* gitpython
 
 ### Installation
 
