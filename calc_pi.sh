@@ -4,7 +4,7 @@
 #PBS -N calcpi
 #PBS -m ae
 #PBS -M craig.arthur@ga.gov.au
-#PBS -lwalltime=03:00:00
+#PBS -lwalltime=04:00:00
 #PBS -lmem=128GB,ncpus=32,jobfs=4000MB
 #PBS -W umask=0022
 #PBS -v NJOBS,NJOB,YEAR
@@ -48,7 +48,7 @@ fi
 
 if [ X$NJOB == X1 ]; then
     $ECHO "This is the first year - it's not a restart"
-    export YEAR=1979
+    export YEAR=1992
     
 else
     export YEAR=$(($YEAR+1))
