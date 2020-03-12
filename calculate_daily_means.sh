@@ -1,28 +1,30 @@
 #!/bin/bash
 #PBS -Pw85
 #PBS -qnormal
-#PBS -N calcpi
+#PBS -N calc_daily_mean
 #PBS -m ae
 #PBS -M craig.arthur@ga.gov.au
-#PBS -lwalltime=05:00:00
-#PBS -lmem=128GB,ncpus=32,jobfs=4000MB
+#PBS -lwalltime=02:00:00
+#PBS -lmem=64GB,ncpus=16,jobfs=4000MB
 #PBS -W umask=0022
 #PBS -v NJOBS,NJOB,YEAR
 #PBS -joe
-#PBS -lstorage=gdata/w85+gdata/ub4
+#PBS -lstorage=scratch/w85
 
 module purge
 module load pbs
 module load dot
 
-module load python3/3.7.4
 module load netcdf/4.6.3
+module load cdo/1.9.8
+module load nco/4.9.1
+
 module load openmpi
-export PYTHONPATH=/g/data/w85/.local/lib/python3.7/site-packages:$PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:$HOME/pcmin
+
 # Suppresses an error related to HDF5 libraries:
 export HDF5_DISABLE_VERSION_CHECK=2
 ECHO=/bin/echo
+SCRATCH=/scratch/$PROJECT/$USER
 
 if [ X$NJOBS == X ]; then
     $ECHO "NJOBS (total number of jobs in sequence) is not set - defaulting to 1"
@@ -39,6 +41,7 @@ if [ X$NJOB == X ]; then
 fi
 
 #
+
 # Quick termination of job sequence - look for a specific file 
 #
 if [ -f STOP_SEQUENCE ] ; then
@@ -48,21 +51,24 @@ fi
 
 if [ X$NJOB == X1 ]; then
     $ECHO "This is the first year - it's not a restart"
-    export YEAR=2011
-    
+    export YEAR=1979
 else
     export YEAR=$(($YEAR+1))
 fi
-$ECHO "Processing PI for $YEAR"
+$ECHO "Calculating daily PI for $YEAR"
 
-cd $HOME/pcmin
+cd $SCRATCH/pcmin
 
-mpirun -np $PBS_NCPUS python3 calculate.py -c calculate.ini -y $YEAR > calculate.stdout.$YEAR 2>&1
+cdo mergetime pcmin.${YEAR}????_${YEAR}????.nc pcmin.${YEAR}0101_${YEAR}1231.nc > calculate_daily_mean.stdout.$YEAR 2>&1
+if [[ $? -ne 0 ]]; then
+    $ECHO "The command appears to have failed for ${YEAR}"
+    exit 0
+fi
 
 if [ $NJOB -lt $NJOBS ]; then
     NJOB=$(($NJOB+1))
     $ECHO "Submitting job number $NJOB in sequence of $NJOBS jobs"
-    qsub -v NJOB=$NJOB,NJOBS=$NJOBS,YEAR=$YEAR calc_pi.sh
+    qsub -v NJOB=$NJOB,NJOBS=$NJOBS,YEAR=$YEAR ${0}
 else
     $ECHO "Finished last job in sequence"
 fi
