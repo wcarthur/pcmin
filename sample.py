@@ -76,11 +76,12 @@ def sampleDailyLTMPI(dt, lon, lat, filepath):
 
     # Daily long term mean data file stores datetime for the 
     # first year in the collection - 1979
-    ltmdt = datetime(1979, dt.month, dt.day, dt.hour, 0)
     if (dt.month == 2) & (dt.day == 29):
         # Edge case - leap year - just use the previous day's value
         LOGGER.info("Date represents Feb 29 - using previous day's data")
         ltmdt = datetime(1979, dt.month, 28, dt.hour, 0)
+    else:
+        ltmdt = datetime(1979, dt.month, dt.day, dt.hour, 0)
 
     LOGGER.info(f"Loading {filepath}")
     try:
@@ -92,6 +93,13 @@ def sampleDailyLTMPI(dt, lon, lat, filepath):
     nctimes = ncobj.variables['time'] # Only retrieve the variable, not the values
     nclon = ncobj.variables['longitude'][:]
     nclat = ncobj.variables['latitude'][:]
+
+    if (lon > nclon.max()) or (lon < nclon.min()):
+        LOGGER.warn(f"Point lies outside the data grid")
+        return 0, 0
+    if (lat > nclat.max()) or (lat < nclat.min()):
+        LOGGER.warn(f"Point lies outside the data grid")
+        return 0, 0
     times = n2t(nctimes[:], units=nctimes.units,
                 calendar=nctimes.calendar)
     tdx = np.where(times==ltmdt)[0]
@@ -130,6 +138,13 @@ def sampleDailyPI(dt, lon, lat, filepath):
     nctimes = ncobj.variables['time'] # Only retrieve the variable, not the values
     nclon = ncobj.variables['longitude'][:]
     nclat = ncobj.variables['latitude'][:]
+
+    if (lon > nclon.max()) or (lon < nclon.min()):
+        LOGGER.warn(f"Point lies outside the data grid")
+        return 0, 0
+    if (lat > nclat.max()) or (lat < nclat.min()):
+        LOGGER.warn(f"Point lies outside the data grid")
+        return 0, 0
 
     times = n2t(nctimes[:], units=nctimes.units,
                 calendar=nctimes.calendar)
