@@ -123,6 +123,8 @@ def sampleDailyPI(dt, lon, lat, filepath):
     :returns: Potential intensity maximum wind speed (m/s) and minimum pressure (hPa) 
     """
     LOGGER.info(f"Extracting data for {dt.strftime('%Y-%m-%d %H:%M')} at {lon}E, {lat}S")
+    # Pesky NT timezones!
+    dt = dt.replace(minute=0)
     startdate = datetime(dt.year, dt.month, 1)
     enddate = datetime(dt.year, dt.month, 
                        monthrange(dt.year, dt.month)[1])
