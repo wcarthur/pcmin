@@ -86,7 +86,7 @@ def main():
         console = logging.StreamHandler(sys.stdout)
         console.setLevel(getattr(logging, logLevel))
         formatter = logging.Formatter('%(asctime)s: %(funcName)s:  %(message)s',
-                                      '%H:%M:%S', )
+                                      datefmt='%H:%M:%S', )
         console.setFormatter(formatter)
         LOGGER.addHandler(console)
 

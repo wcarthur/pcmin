@@ -22,11 +22,23 @@ from datetime import datetime
 
 import seaborn as sns
 
+from git import Repo
+r = Repo('')
+commit = str(r.commit('HEAD'))
+
 LOGGER = logging.getLogger()
 logging.basicConfig(level='INFO', 
                     format="%(asctime)s: %(funcName)s: %(message)s",
                     filename='plotPI.log', filemode='w',
                     datefmt="%Y-%m-%d %H:%M:%S")
+console = logging.StreamHandler(sys.stdout)
+console.setLevel(getattr(logging, 'INFO'))
+formatter = logging.Formatter('%(asctime)s: %(funcName)s:  %(message)s',
+                                datefmt='%H:%M:%S', )
+console.setFormatter(formatter)
+LOGGER.addHandler(console)
+LOGGER.info(f"Started {sys.argv[0]} (pid {os.getpid()})")
+LOGGER.info(f"Code version: f{commit}")
 
 sns.set_context("talk")
 palette = [(1.000, 1.000, 1.000), (0.000, 0.627, 0.235), (0.412, 0.627, 0.235), 
@@ -72,6 +84,8 @@ for tdx, dt in enumerate(dts):
     ax.set_xlim((80, 180))
     plt.colorbar(cf, label='Potential intensity (m/s)', extend='max', orientation='horizontal', 
                 shrink=0.75, aspect=30, pad=0.055)
-    ax.set_title(dt[tdx].strftime("%B %Y"))
-    plt.savefig(os.path.join(dataPath, f"pcmin.{dt[tdx].strftime('%Y-%m')}.png"), bbox_inches='tight')
+    ax.set_title(dt.strftime("%B %Y"))
+    plt.savefig(os.path.join(dataPath, f"pcmin.{dt.strftime('%Y-%m')}.png"), bbox_inches='tight')
     plt.close(fig)
+
+LOGGER.info("Finished")
