@@ -10,3 +10,4 @@ __pycache__/
 *.log-*
 *.o[0-9]*
 *.stdout.*
+.vscode/settings.json

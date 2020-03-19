@@ -87,5 +87,46 @@ for tdx, dt in enumerate(dts):
     ax.set_title(dt.strftime("%B %Y"))
     plt.savefig(os.path.join(dataPath, f"pcmin.{dt.strftime('%Y-%m')}.png"), bbox_inches='tight')
     plt.close(fig)
+ncobj.close()
+
+LOGGER.info("Plotting monthly long term mean maps")
+monltm = os.path.join(dataPath, "pcmin.monltm.nc")
+ncobj = Dataset(monltm, 'r')
+
+lat = ncobj.variables['latitude'][:]
+lon = ncobj.variables['longitude'][:]
+nctimes = ncobj.variables['time']
+dts = n2t(nctimes[:], units=nctimes.units,
+         calendar=nctimes.calendar)
+
+xx, yy = np.meshgrid(lon, lat)
+for tdx, dt in enumerate(dts):
+    LOGGER.info(f"Plotting {dt.strftime('%B')}")
+    vmax = ncobj.variables['vmax'][tdx,:,:]
+    fig = plt.figure(figsize=(12, 8))
+    ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=0))
+    ax.coastlines(resolution='10m', color='k', linewidth=1)
+    ax.add_feature(feature.BORDERS)
+    ax.add_feature(feature.LAND, color='beige')
+
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                    linewidth=2, color='gray', alpha=0.5, linestyle='--')
+    gl.xlabels_top = False
+    gl.ylabels_right = False
+    gl.xformatter = LONGITUDE_FORMATTER
+    gl.yformatter = LATITUDE_FORMATTER
+    gl.xlocator = mticker.MultipleLocator(10)
+    gl.ylocator = mticker.MultipleLocator(5)
+    ax.grid(True)
+    cf = ax.contourf(xx, yy, vmax, cmap=cmap, levels=np.arange(5, 121, 5), extend='both')
+    cs = ax.contour(xx, yy, vmax, colors='k',levels=np.arange(5, 121, 5), linewidth=1, alpha=0.5)
+    ax.set_ylim((-50, 0))
+    ax.set_xlim((80, 180))
+    plt.colorbar(cf, label='Potential intensity (m/s)', extend='max', orientation='horizontal', 
+                shrink=0.75, aspect=30, pad=0.055)
+    ax.set_title(f"Mean potential intensity - {dt.strftime('%B')}")
+    plt.savefig(os.path.join(dataPath, f"pcmin.{dt.strftime('%m')}.png"), bbox_inches='tight')
+    plt.close(fig)
+ncobj.close()
 
 LOGGER.info("Finished")

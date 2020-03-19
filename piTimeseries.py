@@ -38,9 +38,7 @@ LOGGER.info(f"Started {sys.argv[0]} (pid {os.getpid()})")
 LOGGER.info(f"Code version: f{commit}")
 
 sns.set_context("talk")
-palette = [(1.000, 1.000, 1.000), (0.000, 0.627, 0.235), (0.412, 0.627, 0.235), 
-           (0.663, 0.780, 0.282), (0.957, 0.812, 0.000), (0.925, 0.643, 0.016), 
-           (0.835, 0.314, 0.118), (0.780, 0.086, 0.118)]
+palette = sns.color_palette()
 
 years = mdates.YearLocator()   # every year
 months = mdates.MonthLocator()  # every month
@@ -58,13 +56,12 @@ dts = n2t(nctimes[:], units=nctimes.units,
          calendar=nctimes.calendar)
 
 cs_idx = np.where((lon >= 145) & (lon <= 160))[0]
-cs_jdy = np.where((lat >= -30) & (lat <= -10))[0]
-io_idx = np.where((lon >= 100)  & (lon <= 120))[0]
-io_jdy = np.where((lat >= -30) & (lat <= -10))[0]
+cs_jdy = np.where((lat >= -25) & (lat <= -10))[0]
+io_idx = np.where((lon >= 100) & (lon <= 130))[0]
+io_jdy = np.where((lat >= -25) & (lat <= -10))[0]
+
 cs_vmax = np.nanmean(ncobj.variables['vmax'][:, cs_jdy, cs_idx], axis=(1,2))
 io_vmax = np.nanmean(ncobj.variables['vmax'][:, io_jdy, io_idx], axis=(1,2))
-
-
 
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.plot(dts, cs_vmax, color='r', label='Coral Sea')
@@ -76,32 +73,26 @@ ax.set_ylabel("Potential intensity (m/s)")
 ax.set_xlabel("Year")
 ax.legend()
 fig.tight_layout()
+plt.savefig(os.path.join(dataPath, "pcmin.monmean.png"), bbox_inches='tight')
 
-
-# In[69]:
-
-for tdx, dt in enumerate(dts):
+for tdx in range(0, 12):
+    dt = dts[tdx]
+    LOGGER.info(f"Plotting monthly mean PI for {dt.strftime('%B')}")
     fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(dts[tdx:491:12], cs_vmax[tdx:491:12], label='Coral Sea')
-    ax.plot(dts[tdx:491:12], io_vmax[tdx:491:12], label='Indian Ocean')
+    sns.regplot(x=mdates.date2num(dts[tdx:491:12]), y=cs_vmax[tdx:491:12], label='Coral Sea', ax=ax, scatter=False, truncate=True, color=palette[0], line_kws={'alpha':0.5, 'linestyle':'--'})
+    sns.regplot(x=mdates.date2num(dts[tdx:491:12]), y=io_vmax[tdx:491:12], label='Indian Ocean', ax=ax, scatter=False, truncate=True, color=palette[1], line_kws={'alpha':0.5, 'linestyle':'--'})
 
+    ax.plot(dts[tdx:491:12], cs_vmax[tdx:491:12], color=palette[0])
+    ax.plot(dts[tdx:491:12], io_vmax[tdx:491:12], color=palette[1])
     locator = mdates.YearLocator(5)
     ax.xaxis.set_major_locator(locator)
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
     ax.set_ylabel("Potential intensity (m/s)")
     ax.set_xlabel("Year")
-    ax.set_title("Mean potential intensity")
+    ax.set_title(f"Mean potential intensity - {dt.strftime('%B')}")
+    ax.set_ylim((40, 100))
     ax.legend()
     fig.tight_layout()
 
     plt.savefig(os.path.join(dataPath, f"pcmin.monmean.{dt.strftime('%m')}.png"), bbox_inches='tight')
     plt.close(fig)
-# In[22]:
-
-
-import xarray
-
-ds = xarray.open_dataset(monmean)
-
-ds.vmax.isel(longitude=idx, latitude=jdy).mean(axis=(1, 2))
-
