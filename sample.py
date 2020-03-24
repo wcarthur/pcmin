@@ -35,20 +35,29 @@ def loadTrackFile(trackfile):
 
     :returns:  `pandas.DataFrame` of TC data (only a limited number of attributes)
     """
-
-    obstc = pd.read_csv(trackfile, na_values=[' '], parse_dates=[2])
+    try:
+        obstc = pd.read_csv(trackfile, na_values=[' '], parse_dates=[2])
+    except:
+        LOGGER.exception(f"Failed to open {trackfile}")
+        LOGGER.exception(f"{sys.exc_info()[0]}")
     
     return obstc
 
 def getidx(gridlon, gridlat, ptlon, ptlat, distance=500):
     """
     Determine the indices of points in a grid that are within 
-    the specified distance of a given point.
+    the specified distance of a given point. 
+
+    NOTE: The point does not have to lie within the grid.
 
     :param gridlon: `numpy.ndarray` of longitude points from a grid to interrogate
     :param gridlat: `numpy.ndarray` of latitude points from a grid to interrogate
     :param float ptlon: longitude of the point of interest. 
     :param float ptlat: latitude of the point of interest.
+    :param float distance: Search distance from point (`ptlon`, `ptlat`)
+
+    :returns: list of indices of all grid points that are within 
+    `distance` kilometres of the given location. 
     """
 
     dist = maputils.gridLatLonDist(ptlon, ptlat, gridlon, gridlat)
@@ -78,12 +87,12 @@ def sampleDailyLTMPI(dt, lon, lat, filepath):
     # first year in the collection - 1979
     if (dt.month == 2) & (dt.day == 29):
         # Edge case - leap year - just use the previous day's value
-        LOGGER.info("Date represents Feb 29 - using previous day's data")
+        LOGGER.debug("Date represents Feb 29 - using previous day's data")
         ltmdt = datetime(1979, dt.month, 28, dt.hour, 0)
     else:
         ltmdt = datetime(1979, dt.month, dt.day, dt.hour, 0)
 
-    LOGGER.info(f"Loading {filepath}")
+    LOGGER.debug(f"Loading {filepath}")
     try:
         ncobj = Dataset(filepath)
     except:
@@ -107,7 +116,7 @@ def sampleDailyLTMPI(dt, lon, lat, filepath):
 
     vmax = np.nanmean(ncobj.variables['vmax'][tdx, jdy, idx])
     pmin = np.nanmean(ncobj.variables['pmin'][tdx, jdy, idx])
-    LOGGER.info(f"Daily LTM Vmax: {vmax:.1f} m/s | Pmin {pmin:.1f} hPa")
+    LOGGER.debug(f"Daily LTM Vmax: {vmax:.1f} m/s | Pmin {pmin:.1f} hPa")
 
     return vmax, pmin
 
@@ -130,7 +139,7 @@ def sampleDailyPI(dt, lon, lat, filepath):
                        monthrange(dt.year, dt.month)[1])
     filedatestr = f"{startdate.strftime('%Y%m%d')}_{enddate.strftime('%Y%m%d')}"
     tfile = pjoin(filepath,  f'pcmin.{filedatestr}.nc')
-    LOGGER.info(f"Loading {tfile}")
+    LOGGER.debug(f"Loading {tfile}")
     try:
         ncobj = Dataset(tfile)
     except:
@@ -157,7 +166,7 @@ def sampleDailyPI(dt, lon, lat, filepath):
     # to take the mean, ignoring any missing values:
     vmax = np.nanmean(ncobj.variables['vmax'][tdx, jdy, idx])
     pmin = np.nanmean(ncobj.variables['pmin'][tdx, jdy, idx])
-    LOGGER.info(f"Daily Vmax: {vmax:.1f} m/s | Pmin {pmin:.1f} hPa")
+    LOGGER.debug(f"Daily Vmax: {vmax:.1f} m/s | Pmin {pmin:.1f} hPa")
 
     return vmax, pmin
 
