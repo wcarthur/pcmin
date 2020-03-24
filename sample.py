@@ -70,6 +70,24 @@ def getidx(gridlon, gridlat, ptlon, ptlat, distance=500):
 
     return idx, idy
 
+def sampleMonthlyPI(dt, lon, lat, filepath):
+    """
+    Sample monthly term mean PI
+    
+    :param dt: :class:`datetime.datetime` object containing the 
+               date of an observation
+    :param float lon: Longitude of the observation
+    :param float lat: Latitude of the observation
+    :param str filepath: Basepath of the actual monthly mean PI data
+
+    :returns: Monthly mean potential intensity maximum wind speed 
+              (m/s) and minimum pressure (hPa) for the month of 
+              the observation
+    """
+    LOGGER.info(f"Extracting monthly mean data for {dt.strftime('%Y-%m-%d %H:%M')}")
+
+    pass
+
 def sampleDailyLTMPI(dt, lon, lat, filepath):
     """
     Sample daily long term mean PI
