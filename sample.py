@@ -72,7 +72,7 @@ def getidx(gridlon, gridlat, ptlon, ptlat, distance=500):
 
 def sampleMonthlyPI(dt, lon, lat, filepath):
     """
-    Sample monthly term mean PI
+    Sample monthly mean PI
     
     :param dt: :class:`datetime.datetime` object containing the 
                date of an observation
@@ -86,7 +86,31 @@ def sampleMonthlyPI(dt, lon, lat, filepath):
     """
     LOGGER.info(f"Extracting monthly mean data for {dt.strftime('%Y-%m-%d %H:%M')}")
 
-    pass
+    try:
+        ncobj = Dataset(filepath)
+    except:
+        LOGGER.exception(f"Error loading {filepath}")
+        raise
+
+    nctimes = ncobj.variables['time'] # Only retrieve the variable, not the values
+    nclon = ncobj.variables['longitude'][:]
+    nclat = ncobj.variables['latitude'][:]
+
+    if (lon > nclon.max()) or (lon < nclon.min()):
+        LOGGER.warn(f"Point lies outside the data grid")
+        return 0, 0
+    if (lat > nclat.max()) or (lat < nclat.min()):
+        LOGGER.warn(f"Point lies outside the data grid")
+        return 0, 0
+    times = n2t(nctimes[:], units=nctimes.units,
+                calendar=nctimes.calendar)
+    tdx = np.argmin(np.abs(times - dt.to_pydatetime()))
+    idx, jdy = getidx(nclon, nclat, lon, lat, distance=250)
+
+    vmax = np.nanmean(ncobj.variables['vmax'][tdx, jdy, idx])
+    pmin = np.nanmean(ncobj.variables['pmin'][tdx, jdy, idx])
+    LOGGER.debug(f"Monthly mean Vmax: {vmax:.1f} m/s | Pmin {pmin:.1f} hPa")
+    return vmax, pmin
 
 def sampleDailyLTMPI(dt, lon, lat, filepath):
     """
@@ -255,7 +279,7 @@ def main():
     allPIpath = config.get('Input', 'All')
     dailyLTMPath = config.get('Input', 'DailyLTM')
     dailyPath = config.get('Input', 'Daily')
-    MonthlyMeanPath = config.get('Input', 'MonthlyMean')
+    monthlyMeanPath = config.get('Input', 'MonthlyMean')
 
     trackFile = config.get('Input', 'TrackFile')
     outputFile = config.get('Output', 'TrackFile')
@@ -268,8 +292,8 @@ def main():
 
     obstc['monthlyvmax'] = np.zeros(len(obstc.index))
     obstc['monthlypmin'] = np.zeros(len(obstc.index))
-    obstc['monthlyltmvmax'] = np.zeros(len(obstc.index))
-    obstc['monthlyltmpmin'] = np.zeros(len(obstc.index))
+    #obstc['monthlyltmvmax'] = np.zeros(len(obstc.index))
+    #obstc['monthlyltmpmin'] = np.zeros(len(obstc.index))
     
     for idx, row in obstc.iterrows():
         vmax, pmin = sampleDailyPI(row['datetime'], row['lon'], row['lat'], dailyPath)
@@ -278,6 +302,9 @@ def main():
         vmax, pmin = sampleDailyLTMPI(row['datetime'], row['lon'], row['lat'], dailyLTMPath)
         obstc.loc[idx, 'dailyltmvmax'] = vmax
         obstc.loc[idx, 'dailyltmpmin'] = pmin
+        vmax, pmin = sampleMonthlyPI(row['datetime'], row['lon'], row['lat'], monthlyMeanPath)
+        obstc.loc[idx, 'monthlyvmax'] = vmax
+        obstc.loc[idx, 'monthlypmin'] = pmin        
 
     obstc.to_csv(outputFile, index=False)
 
