@@ -70,7 +70,7 @@ def getidx(gridlon, gridlat, ptlon, ptlat, distance=500):
 
     return idx, idy
 
-def sampleMonthlyPI(dt, lon, lat, filepath):
+def sampleMonthlyPI(dt, lon, lat, filepath, distance):
     """
     Sample monthly mean PI
     
@@ -105,14 +105,14 @@ def sampleMonthlyPI(dt, lon, lat, filepath):
     times = n2t(nctimes[:], units=nctimes.units,
                 calendar=nctimes.calendar)
     tdx = np.argmin(np.abs(times - dt.to_pydatetime()))
-    idx, jdy = getidx(nclon, nclat, lon, lat, distance=250)
+    idx, jdy = getidx(nclon, nclat, lon, lat, distance)
 
     vmax = np.nanmean(ncobj.variables['vmax'][tdx, jdy, idx])
     pmin = np.nanmean(ncobj.variables['pmin'][tdx, jdy, idx])
     LOGGER.debug(f"Monthly mean Vmax: {vmax:.1f} m/s | Pmin {pmin:.1f} hPa")
     return vmax, pmin
 
-def sampleDailyLTMPI(dt, lon, lat, filepath):
+def sampleDailyLTMPI(dt, lon, lat, filepath, distance):
     """
     Sample daily long term mean PI
     
@@ -154,7 +154,7 @@ def sampleDailyLTMPI(dt, lon, lat, filepath):
     times = n2t(nctimes[:], units=nctimes.units,
                 calendar=nctimes.calendar)
     tdx = np.where(times==ltmdt)[0]
-    idx, jdy = getidx(nclon, nclat, lon, lat, distance=250)
+    idx, jdy = getidx(nclon, nclat, lon, lat, distance)
 
     vmax = np.nanmean(ncobj.variables['vmax'][tdx, jdy, idx])
     pmin = np.nanmean(ncobj.variables['pmin'][tdx, jdy, idx])
@@ -162,7 +162,7 @@ def sampleDailyLTMPI(dt, lon, lat, filepath):
 
     return vmax, pmin
 
-def sampleDailyPI(dt, lon, lat, filepath):
+def sampleDailyPI(dt, lon, lat, filepath, distance):
     """
     Sample the actual PI values for a given datestamp
 
@@ -202,7 +202,7 @@ def sampleDailyPI(dt, lon, lat, filepath):
     times = n2t(nctimes[:], units=nctimes.units,
                 calendar=nctimes.calendar)
     tdx = np.where(times==dt)[0]
-    idx, jdy = getidx(nclon, nclat, lon, lat, distance=250)
+    idx, jdy = getidx(nclon, nclat, lon, lat, distance)
 
     # Note the idx and idy are a collection of grid points, so need
     # to take the mean, ignoring any missing values:
@@ -280,6 +280,7 @@ def main():
     dailyLTMPath = config.get('Input', 'DailyLTM')
     dailyPath = config.get('Input', 'Daily')
     monthlyMeanPath = config.get('Input', 'MonthlyMean')
+    distance = config.get('Input', 'Distance')
 
     trackFile = config.get('Input', 'TrackFile')
     outputFile = config.get('Output', 'TrackFile')
@@ -296,17 +297,18 @@ def main():
     #obstc['monthlyltmpmin'] = np.zeros(len(obstc.index))
     
     for idx, row in obstc.iterrows():
-        vmax, pmin = sampleDailyPI(row['datetime'], row['lon'], row['lat'], dailyPath)
+        vmax, pmin = sampleDailyPI(row['datetime'], row['lon'], row['lat'], dailyPath, distance)
         obstc.loc[idx, 'dailyvmax'] = vmax
         obstc.loc[idx, 'dailypmin'] = pmin
-        vmax, pmin = sampleDailyLTMPI(row['datetime'], row['lon'], row['lat'], dailyLTMPath)
+        vmax, pmin = sampleDailyLTMPI(row['datetime'], row['lon'], row['lat'], dailyLTMPath, distance)
         obstc.loc[idx, 'dailyltmvmax'] = vmax
         obstc.loc[idx, 'dailyltmpmin'] = pmin
-        vmax, pmin = sampleMonthlyPI(row['datetime'], row['lon'], row['lat'], monthlyMeanPath)
+        vmax, pmin = sampleMonthlyPI(row['datetime'], row['lon'], row['lat'], monthlyMeanPath, distance)
         obstc.loc[idx, 'monthlyvmax'] = vmax
         obstc.loc[idx, 'monthlypmin'] = pmin        
 
     obstc.to_csv(outputFile, index=False)
+    LOGGER.info(f"Finished {sys.argv[0]})
 
 if __name__ == '__main__':
     main()
