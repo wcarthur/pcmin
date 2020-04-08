@@ -280,7 +280,7 @@ def main():
     dailyLTMPath = config.get('Input', 'DailyLTM')
     dailyPath = config.get('Input', 'Daily')
     monthlyMeanPath = config.get('Input', 'MonthlyMean')
-    distance = config.get('Input', 'Distance')
+    distance = config.getint('Input', 'Distance')
 
     trackFile = config.get('Input', 'TrackFile')
     outputFile = config.get('Output', 'TrackFile')
@@ -307,8 +307,8 @@ def main():
         obstc.loc[idx, 'monthlyvmax'] = vmax
         obstc.loc[idx, 'monthlypmin'] = pmin        
 
-    obstc.to_csv(outputFile, index=False)
-    LOGGER.info(f"Finished {sys.argv[0]})
+    obstc.to_csv(outputFile, float_format="%.2f")
+    LOGGER.info(f"Finished {sys.argv[0]}")
 
 if __name__ == '__main__':
     main()
