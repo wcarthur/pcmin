@@ -12,6 +12,7 @@ from os.path import join as pjoin, realpath, isdir, dirname, splitext
 
 import numpy as np
 import pandas as pd
+from scipy.interpolate import interp1d
 
 from git import Repo
 
@@ -35,8 +36,10 @@ def loadTrackFile(trackfile):
 
     :returns:  `pandas.DataFrame` of TC data (only a limited number of attributes)
     """
+    converters = {'datetime': lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M")}
     try:
-        obstc = pd.read_csv(trackfile, na_values=[' '], parse_dates=[2])
+        obstc = pd.read_csv(trackfile, na_values=[' '], 
+                            converters=converters)
     except:
         LOGGER.exception(f"Failed to open {trackfile}")
         LOGGER.exception(f"{sys.exc_info()[0]}")
@@ -111,6 +114,67 @@ def sampleMonthlyPI(dt, lon, lat, filepath, distance):
     pmin = np.nanmean(ncobj.variables['pmin'][tdx, jdy, idx])
     LOGGER.debug(f"Monthly mean Vmax: {vmax:.1f} m/s | Pmin {pmin:.1f} hPa")
     return vmax, pmin
+
+def sampleMonthlyLTMPI(dt, lon, lat, filepath, distance):
+    """
+    Sample monthly long term mean PI
+    
+    :param dt: :class:`datetime.datetime` object containing the 
+               date of an observation
+    :param float lon: Longitude of the observation
+    :param float lat: Latitude of the observation
+    :param str filepath: Basepath of the actual monthly mean PI data
+
+    :returns: Monthly mean potential intensity maximum wind speed 
+              (m/s) and minimum pressure (hPa) for the month of 
+              the observation
+    """
+    LOGGER.info(f"Extracting monthly long term mean data for {dt.strftime('%Y-%m-%d %H:%M')}")
+    # Daily long term mean data file stores datetime for the 
+    # first year in the collection - 1979
+    if (dt.month == 2) & (dt.day == 29):
+        # Edge case - leap year - just use the previous day's value
+        LOGGER.debug("Date represents Feb 29 - using previous day's data")
+        ltmdt = datetime(1979, dt.month, 28, dt.hour, 0)
+    else:
+        ltmdt = datetime(1979, dt.month, dt.day, dt.hour, 0)
+
+    try:
+        ncobj = Dataset(filepath)
+    except:
+        LOGGER.exception(f"Error loading {filepath}")
+        raise
+
+    nctimes = ncobj.variables['time'] # Only retrieve the variable, not the values
+    nclon = ncobj.variables['longitude'][:]
+    nclat = ncobj.variables['latitude'][:]
+
+    if (lon > nclon.max()) or (lon < nclon.min()):
+        LOGGER.warn(f"Point lies outside the data grid")
+        return 0, 0
+    if (lat > nclat.max()) or (lat < nclat.min()):
+        LOGGER.warn(f"Point lies outside the data grid")
+        return 0, 0
+
+    times = n2t(nctimes[:], units=nctimes.units,
+                calendar=nctimes.calendar)
+    #tdx = np.argmin(np.abs(times - dt.to_pydatetime()))
+    idx, jdy = getidx(nclon, nclat, lon, lat, distance)
+
+    # Extract the data for all times within the distance of the observation
+    # and average spatially (should give 12 values)
+    vmax = np.nanmean(np.nanmean(ncobj.variables['vmax'][:, jdy, idx], axis=2), axis=1)
+    pmin = np.nanmean(np.nanmean(ncobj.variables['pmin'][:, jdy, idx], axis=2), axis=1)
+    
+    # Interpolate to the day of month using 1-d interpolation. `
+    vmaxinterp = interp1d(nctimes[:], vmax, fill_value='extrapolate', kind='cubic')
+    pmininterp = interp1d(nctimes[:], pmin, fill_value='extrapolate', kind='cubic')
+    
+    vmaxltm = vmaxinterp(cftime.date2num(ltmdt, units=nctimes.units, calendar=nctimes.calendar))
+    pminltm = pmininterp(cftime.date2num(ltmdt, units=nctimes.units, calendar=nctimes.calendar))
+    LOGGER.debug(f"Monthly mean Vmax: {vmaxltm:.1f} m/s | Pmin {pminltm:.1f} hPa")
+    return vmaxltm, pminltm
+
 
 def sampleDailyLTMPI(dt, lon, lat, filepath, distance):
     """
@@ -280,30 +344,34 @@ def main():
     dailyLTMPath = config.get('Input', 'DailyLTM')
     dailyPath = config.get('Input', 'Daily')
     monthlyMeanPath = config.get('Input', 'MonthlyMean')
+    monthlyLTMPath = config.get('Input', 'MonthlyLTM')
     distance = config.getint('Input', 'Distance')
 
     trackFile = config.get('Input', 'TrackFile')
     outputFile = config.get('Output', 'TrackFile')
 
     obstc = loadTrackFile(trackFile)
-    obstc['dailyvmax'] = np.zeros(len(obstc.index))
-    obstc['dailypmin'] = np.zeros(len(obstc.index))
+    #obstc['dailyvmax'] = np.zeros(len(obstc.index))
+    #obstc['dailypmin'] = np.zeros(len(obstc.index))
     obstc['dailyltmvmax'] = np.zeros(len(obstc.index))
     obstc['dailyltmpmin'] = np.zeros(len(obstc.index))
 
-    obstc['monthlyvmax'] = np.zeros(len(obstc.index))
-    obstc['monthlypmin'] = np.zeros(len(obstc.index))
-    #obstc['monthlyltmvmax'] = np.zeros(len(obstc.index))
-    #obstc['monthlyltmpmin'] = np.zeros(len(obstc.index))
+    #obstc['monthlyvmax'] = np.zeros(len(obstc.index))
+    #obstc['monthlypmin'] = np.zeros(len(obstc.index))
+    obstc['monthlyltmvmax'] = np.zeros(len(obstc.index))
+    obstc['monthlyltmpmin'] = np.zeros(len(obstc.index))
+    obstc['monthlyltmaxvmax'] = np.zeros(len(obstc.index))
+    obstc['monthlyltmaxpmin'] = np.zeros(len(obstc.index))
     
+
     for idx, row in obstc.iterrows():
-        vmax, pmin = sampleDailyPI(row['datetime'], row['lon'], row['lat'], dailyPath, distance)
-        obstc.loc[idx, 'dailyvmax'] = vmax
-        obstc.loc[idx, 'dailypmin'] = pmin
+        #vmax, pmin = sampleDailyPI(row['datetime'], row['lon'], row['lat'], dailyPath, distance)
+        #obstc.loc[idx, 'dailyvmax'] = vmax
+        #obstc.loc[idx, 'dailypmin'] = pmin
         vmax, pmin = sampleDailyLTMPI(row['datetime'], row['lon'], row['lat'], dailyLTMPath, distance)
         obstc.loc[idx, 'dailyltmvmax'] = vmax
         obstc.loc[idx, 'dailyltmpmin'] = pmin
-        vmax, pmin = sampleMonthlyPI(row['datetime'], row['lon'], row['lat'], monthlyMeanPath, distance)
+        vmax, pmin = sampleMonthlyLTMPI(row['datetime'], row['lon'], row['lat'], monthlyLTMPath, distance)
         obstc.loc[idx, 'monthlyvmax'] = vmax
         obstc.loc[idx, 'monthlypmin'] = pmin        
 
