@@ -12,29 +12,29 @@
 
 module load nco/4.9.2
 module load cdo/1.9.8
-
+module list
 FS=$IFS
 
 BASEPATH=/g/data/$PROJECT/QFES_SWHA/hazard/input/pi
 STARTYEAR=2020
 
-MODELLIST="ACCESS1-0Q,ACCES1-3Q,CCSM4Q,CNRM-CM5Q,CSIRO-Mk3-6-0,GFDL-CM3Q,GFDL-ESM2MQ,HadGEM2Q,MIROC5Q,MPI-ESM-LRQ,NorESM1-MQ"
-RCPLIST="rcp45,rcp85" 
+MODELLIST="ACCESS1-0Q:ACCESS1-3Q:CCSM4Q:CNRM-CM5Q:CSIRO-Mk3-6-0Q:GFDL-CM3Q:GFDL-ESM2MQ:HadGEM2Q:MIROC5Q:MPI-ESM-LRQ:NorESM1-MQ"
+RCPLIST="rcp45:rcp85" 
 COUNTER=0
-IFS=,
+IFS=":"
 for i in {0..60..20}; do
     YEAR=$(($STARTYEAR + $i))
     ENDYEAR=$(($YEAR + 19))
     DATESTR=$YEAR\_$ENDYEAR
     for MODEL in $MODELLIST; do
         for RCP in $RCPLIST; do
-            INPUTFILE=$BASEPATH/Monthly/Cyclone_PI_$MODEL\_$RCP.Aust.*.nc
+            INPUTFILEPATTERN=$BASEPATH/Monthly/Cyclone_PI_$MODEL\_$RCP.Aust.*.nc
             OUTPUTFILE=$BASEPATH/monthly/pcmin.$MODEL\_$RCP.$YEAR-$ENDYEAR.nc
+            INPUTFILE=`ls ${INPUTFILEPATTERN}`
             echo $INPUTFILE
             echo $OUTPUTFILE
-            CMD="cdo -ymonmean -selyear,$YEAR/$ENDYEAR $INPUTFILE -O $OUTPUTFILE"
-            echo $CMD
-            $CMD
+            
+            cdo -ymonmean -selyear,${YEAR}/${ENDYEAR} ${INPUTFILE} ${OUTPUTFILE}
             if [[ $? -ne 0 ]]; then
                 echo "Looks like the command failed when processing $INPUTFILE"
             else
