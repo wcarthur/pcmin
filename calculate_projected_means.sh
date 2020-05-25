@@ -34,12 +34,12 @@ for i in {0..60..20}; do
             echo $OUTPUTFILE
             CMD="cdo -ymonmean -selyear,$YEAR/$ENDYEAR $INPUTFILE -O $OUTPUTFILE"
             echo $CMD
-            #$CMD
-            #if [[ $? -ne 0 ]]; then
-            #    echo "Looks like the command failed when processing $INPUTFILE"
-            #else
-            #    echo "Processed $INPUTFILE ($YEAR)"
-            #fi
+            $CMD
+            if [[ $? -ne 0 ]]; then
+                echo "Looks like the command failed when processing $INPUTFILE"
+            else
+                echo "Processed $INPUTFILE ($YEAR)"
+            fi
         done
     done
 done
