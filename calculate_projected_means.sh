@@ -22,7 +22,7 @@ MODELLIST="ACCESS1-0Q, ACCES1-3Q, CCSM4Q, CNRM-CM5Q, CSIRO-Mk3-6-0, GFDL-CM3Q, G
 RCPLIST="rcp45, rcp85" 
 COUNTER=0
 IFS=,
-for i in {0..80..20}; do
+for i in {0..60..20}; do
     YEAR=$(($STARTYEAR + $i))
     ENDYEAR=$(($YEAR + 19))
     DATESTR=$YEAR\_$ENDYEAR
