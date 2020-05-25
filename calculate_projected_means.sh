@@ -28,8 +28,8 @@ for i in {0..60..20}; do
     DATESTR=$YEAR\_$ENDYEAR
     for MODEL in $MODELLIST; do
         for RCP in $RCPLIST; do
-            INPUTFILE=$BASEPATH/Monthly/Cyclone_PI_$MODEL_$RCP.Aust.*.nc
-            OUTPUTFILE=$BASEPATH/monthly/pcmin.$MODEL_$RCP.$YEAR-$ENDYEAR.nc
+            INPUTFILE=$BASEPATH/Monthly/Cyclone_PI_$MODEL\_$RCP.Aust.*.nc
+            OUTPUTFILE=$BASEPATH/monthly/pcmin.$MODEL\_$RCP.$YEAR-$ENDYEAR.nc
             echo $INPUTFILE
             echo $OUTPUTFILE
             CMD="cdo -ymonmean -selyear,$YEAR/$ENDYEAR $INPUTFILE -O $OUTPUTFILE"
