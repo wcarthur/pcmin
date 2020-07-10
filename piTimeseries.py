@@ -44,55 +44,89 @@ years = mdates.YearLocator()   # every year
 months = mdates.MonthLocator()  # every month
 years_fmt = mdates.DateFormatter('%Y')
 
-dataPath = "C:/WorkSpace/data/pi"
-monmean = os.path.join(dataPath, "pcmin.1979-2019.nc")
-ncobj = Dataset(monmean, 'r')
+def calculateMean(inputfile, domain, varname='vmax'):
+    """
+    :param str inputfile: Path to input PI file
+    :param tuple domain: (minlon, maxlon, minlat, maxlat)
 
-lat = ncobj.variables['latitude'][:]
-lon = ncobj.variables['longitude'][:]
-nctimes = ncobj.variables['time']
-n2t = np.vectorize(cfnum2date, excluded=['units', 'calendar'])
-dts = n2t(nctimes[:], units=nctimes.units,
-         calendar=nctimes.calendar)
+    :returns: 1-d series of (spatial) mean of the PI
 
-cs_idx = np.where((lon >= 145) & (lon <= 160))[0]
-cs_jdy = np.where((lat >= -25) & (lat <= -10))[0]
-io_idx = np.where((lon >= 100) & (lon <= 130))[0]
-io_jdy = np.where((lat >= -25) & (lat <= -10))[0]
+    """
+    minlon, maxlon, minlat, maxlat = domain
+    ncobj = Dataset(inputfile, 'r')
+    lat = ncobj.variables['latitude'][:]
+    lon = ncobj.variables['longitude'][:]
+    nctimes = ncobj.variables['time']
+    n2t = np.vectorize(cfnum2date, excluded=['units', 'calendar'])
+    dts = n2t(nctimes[:], units=nctimes.units,
+            calendar=nctimes.calendar)
 
-cs_vmax = np.nanmean(ncobj.variables['vmax'][:, cs_jdy, cs_idx], axis=(1,2))
-io_vmax = np.nanmean(ncobj.variables['vmax'][:, io_jdy, io_idx], axis=(1,2))
+    idx = np.where((lon >= minlon) & (lon <= maxlon))[0]
+    idy = np.where((lat >= minlat) & (lat <= maxlat))[0]
 
-fig, ax = plt.subplots(figsize=(12, 6))
-ax.plot(dts, cs_vmax, color='r', label='Coral Sea')
-ax.plot(dts, io_vmax, color='b', label='Indian Ocean')
-locator = mdates.YearLocator(5)
-ax.xaxis.set_major_locator(locator)
-ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
-ax.set_ylabel("Potential intensity (m/s)")
-ax.set_xlabel("Year")
-ax.legend()
-fig.tight_layout()
-plt.savefig(os.path.join(dataPath, "pcmin.monmean.png"), bbox_inches='tight')
+    data = np.nanmean(ncobj.variables[varname][:, idy, idx], axis=(1, 2))
+    return dts, data
 
-for tdx in range(0, 12):
-    dt = dts[tdx]
-    LOGGER.info(f"Plotting monthly mean PI for {dt.strftime('%B')}")
+def plotMonthlyMean(inputfile, outputpath, domain=(145, 160, -25, -10)):
+
+    dts, vmax = calculateMean(inputfile, domain)
+    #io_vmax = calculateMean(inputfile, (100, 130, -25, -10))
+
     fig, ax = plt.subplots(figsize=(12, 6))
-    sns.regplot(x=mdates.date2num(dts[tdx:491:12]), y=cs_vmax[tdx:491:12], label='Coral Sea', ax=ax, scatter=False, truncate=True, color=palette[0], line_kws={'alpha':0.5, 'linestyle':'--'})
-    sns.regplot(x=mdates.date2num(dts[tdx:491:12]), y=io_vmax[tdx:491:12], label='Indian Ocean', ax=ax, scatter=False, truncate=True, color=palette[1], line_kws={'alpha':0.5, 'linestyle':'--'})
-
-    ax.plot(dts[tdx:491:12], cs_vmax[tdx:491:12], color=palette[0])
-    ax.plot(dts[tdx:491:12], io_vmax[tdx:491:12], color=palette[1])
+    label = fr"{domain[0]}-{domain[1]}$^{{{\circ}}}$E, {domain[2]}-{domain[3]}$^{{{\circ}}}S"
+    ax.plot(dts, vmax, color='r', label=label)
     locator = mdates.YearLocator(5)
     ax.xaxis.set_major_locator(locator)
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
     ax.set_ylabel("Potential intensity (m/s)")
     ax.set_xlabel("Year")
-    ax.set_title(f"Mean potential intensity - {dt.strftime('%B')}")
-    ax.set_ylim((40, 100))
     ax.legend()
     fig.tight_layout()
+    plt.savefig(os.path.join(outputpath, "pcmin.monmean.png"), bbox_inches='tight')
+    return
 
-    plt.savefig(os.path.join(dataPath, f"pcmin.monmean.{dt.strftime('%m')}.png"), bbox_inches='tight')
-    plt.close(fig)
+def plotMonthlyTrends(inputfile, outputpath, domain):
+    dts, vmax = calculateMean(inputfile, domain)
+    label = fr"{domain[0]}-{domain[1]}$^{{{\circ}}}$E, {domain[2]}-{domain[3]}$^{{{\circ}}}S"
+
+
+    for tdx in range(0, 12):
+        dt = dts[tdx]
+        LOGGER.info(f"Plotting monthly mean PI for {dt.strftime('%B')}")
+        fig, ax = plt.subplots(figsize=(12, 6))
+        sns.regplot(x=mdates.date2num(dts[tdx:491:12]), y=vmax[tdx:491:12], 
+                    label=label, ax=ax, scatter=False, truncate=True, 
+                    color=palette[0], line_kws={'alpha':0.5, 'linestyle':'--'})
+
+        ax.plot(dts[tdx:491:12], vmax[tdx:491:12], color=palette[0])
+        locator = mdates.YearLocator(5)
+        ax.xaxis.set_major_locator(locator)
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+        ax.set_ylabel("Potential intensity (m/s)")
+        ax.set_xlabel("Year")
+        ax.set_title(f"Mean potential intensity - {dt.strftime('%B')}")
+        ax.set_ylim((40, 100))
+        ax.legend()
+        fig.tight_layout()
+
+        plt.savefig(os.path.join(outputPath, f"pcmin.monmean.{dt.strftime('%m')}.png"), bbox_inches='tight')
+        plt.close(fig)
+
+
+if __name__ == "__main__":
+    import argparse
+    p = argparse.ArgumentParser()
+    p.add_argument('-i', '--input', help="Input file")
+    p.add_argument('-d', '--domain', nargs=4, type=float)
+    p.add_argument('-o', '--output', help="Destination path for output")
+    args = p.parse_args()
+
+    inputfile = args.input
+    outputpath = args.output
+    domain = tuple(args.domain)
+
+    plotMonthlyMean(inputfile, outputpath, domain)
+    plotMonthlyTrends(inputfile, outputpath, domain)
+    
+
+
