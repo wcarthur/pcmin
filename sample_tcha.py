@@ -19,6 +19,7 @@ from git import Repo
 import metutils
 import maputils
 import nctools
+from loadData import maxWindSpeed
 from parallel import attemptParallel, disableOnWorkers
 
 LOGGER = logging.getLogger()
@@ -38,13 +39,46 @@ def loadTrackFile(trackfile):
     """
     converters = {'datetime': lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M")}
     try:
-        obstc = pd.read_csv(trackfile, na_values=[' '], 
+        df = pd.read_csv(trackfile, na_values=[' '], 
                             converters=converters)
     except:
         LOGGER.exception(f"Failed to open {trackfile}")
         LOGGER.exception(f"{sys.exc_info()[0]}")
+
+    print(df.columns)
+
+    #print(df.datetime[0])
+    #df['dt'] = df.groupby('CycloneNumber')['datetime'].apply(lambda x: np.diff(x))
+    #print(df['dt'])
+    #df['dt'] = df['dt'].transform(lambda x: x.total_seconds())
+    df = calculateMaxWind(df, dtname='datetime')
+
+    return df
+
+def calculateMaxWind(df, dtname='ISO_TIME'):
+    """
+    Calculate a maximum gust wind speed based on the central pressure deficit and the 
+    wind-pressure relation defined in Holland (2008). This uses the function defined in 
+    the TCRM code base, and simply passes the correct variables from the data frame
+    to the function
     
-    return obstc
+    This returns a `DataFrame` with an additional column (`vmax`), which represents an estimated
+    0.2 second maximum gust wind speed.
+    
+    'CycloneNumber', 'Datetime', 'TimeElapsed', 'Longitude', 'Latitude',
+       'Speed', 'Bearing', 'CentralPressure', 'EnvPressure', 'rMax',
+       'geometry', 'category', 'pdiff', 'ni'
+    """
+    idx = df.CycloneNumber.values
+    varidx = np.ones(len(idx))
+    varidx[1:][idx[1:]==idx[:-1]] = 0
+    
+    #dt = (df[dtname] - df[dtname].shift()).fillna(pd.Timedelta(seconds=0)).apply(lambda x: x / np.timedelta64(1,'h')).astype('int64') % (24*60)
+    df['vmax'] = maxWindSpeed(varidx, np.ones(len(df.index)),
+                              df.lon.values, df.lat.values,
+                              df.CentralPressure.values, 
+                              df.EnvPressure.values, gustfactor=1.223)
+    return df
 
 def getidx(gridlon, gridlat, ptlon, ptlat, distance=500):
     """
@@ -167,13 +201,13 @@ def sampleMonthlyLTMPI(dt, lon, lat, filepath, distance):
     pmin = np.nanmean(np.nanmean(ncobj.variables['pmin'][:, jdy, idx], axis=2), axis=1)
     
     # Interpolate to the day of month using 1-d interpolation. `
-    vmaxinterp = interp1d(nctimes[:], vmax, fill_value='extrapolate', kind='cubic')
-    pmininterp = interp1d(nctimes[:], pmin, fill_value='extrapolate', kind='cubic')
+    #vmaxinterp = interp1d(nctimes[:], vmax, fill_value='extrapolate', kind='cubic')
+    #pmininterp = interp1d(nctimes[:], pmin, fill_value='extrapolate', kind='cubic')
     
-    vmaxltm = vmaxinterp(cftime.date2num(ltmdt, units=nctimes.units, calendar=nctimes.calendar))
-    pminltm = pmininterp(cftime.date2num(ltmdt, units=nctimes.units, calendar=nctimes.calendar))
-    LOGGER.debug(f"Monthly mean Vmax: {vmaxltm:.1f} m/s | Pmin {pminltm:.1f} hPa")
-    return vmaxltm, pminltm
+    #vmaxltm = vmaxinterp(cftime.date2num(ltmdt, units=nctimes.units, calendar=nctimes.calendar))
+    #pminltm = pmininterp(cftime.date2num(ltmdt, units=nctimes.units, calendar=nctimes.calendar))
+    LOGGER.debug(f"Monthly LTM Vmax: {vmax[dt.month-1]:.1f} m/s | Pmin {pmin[dt.month-1]:.1f} hPa")
+    return vmax[dt.month-1], pmin[dt.month-1]
 
 
 def sampleDailyLTMPI(dt, lon, lat, filepath, distance):

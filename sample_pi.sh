@@ -16,11 +16,13 @@ module load dot
 
 module load python3/3.7.4
 module load netcdf/4.6.3
+module load geos
 export PYTHONPATH=/g/data/w85/.local/lib/python3.7/site-packages:$PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:$HOME/pcmin
+export PYTHONPATH=$PYTHONPATH:$HOME/pcmin:$HOME/tcrm:$HOME/tcrm/Utilities
 # Suppresses an error related to HDF5 libraries:
 export HDF5_DISABLE_VERSION_CHECK=2
 
 cd $HOME/pcmin
 
-python3 $HOME/pcmin/sample.py -c $HOME/pcmin/sample.ini > $HOME/pcmin/sample_pi.stdout 2>&1
+#python3 $HOME/pcmin/sample.py -c $HOME/pcmin/sample.ini > $HOME/pcmin/sample_pi.stdout 2>&1
+python3 $HOME/pcmin/sample_tcha.py -c $HOME/pcmin/sample_tcha.ini > $HOME/pcmin/sample_tcha.stdout 2>&1
