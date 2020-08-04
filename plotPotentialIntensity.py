@@ -27,22 +27,22 @@ r = Repo('')
 commit = str(r.commit('HEAD'))
 
 LOGGER = logging.getLogger()
-logging.basicConfig(level='INFO', 
+logging.basicConfig(level='INFO',
                     format="%(asctime)s: %(funcName)s: %(message)s",
                     filename='plotPI.log', filemode='w',
                     datefmt="%Y-%m-%d %H:%M:%S")
 console = logging.StreamHandler(sys.stdout)
 console.setLevel(getattr(logging, 'INFO'))
 formatter = logging.Formatter('%(asctime)s: %(funcName)s:  %(message)s',
-                                datefmt='%H:%M:%S', )
+                              datefmt='%H:%M:%S', )
 console.setFormatter(formatter)
 LOGGER.addHandler(console)
 LOGGER.info(f"Started {sys.argv[0]} (pid {os.getpid()})")
 LOGGER.info(f"Code version: f{commit}")
 
 sns.set_context("talk")
-palette = [(1.000, 1.000, 1.000), (0.000, 0.627, 0.235), (0.412, 0.627, 0.235), 
-           (0.663, 0.780, 0.282), (0.957, 0.812, 0.000), (0.925, 0.643, 0.016), 
+palette = [(1.000, 1.000, 1.000), (0.000, 0.627, 0.235), (0.412, 0.627, 0.235),
+           (0.663, 0.780, 0.282), (0.957, 0.812, 0.000), (0.925, 0.643, 0.016),
            (0.835, 0.314, 0.118), (0.780, 0.086, 0.118)]
 cmap = sns.blend_palette(palette, as_cmap=True)
 
@@ -55,14 +55,14 @@ lon = ncobj.variables['longitude'][:]
 nctimes = ncobj.variables['time']
 n2t = np.vectorize(num2date, excluded=['units', 'calendar'])
 dts = n2t(nctimes[:], units=nctimes.units,
-         calendar=nctimes.calendar)
+          calendar=nctimes.calendar)
 
 xx, yy = np.meshgrid(lon, lat)
 
 
 for tdx, dt in enumerate(dts):
     LOGGER.info(f"Plotting {dt.strftime('%B %Y')}")
-    vmax = ncobj.variables['vmax'][tdx,:,:]
+    vmax = ncobj.variables['vmax'][tdx, :, :]
     fig = plt.figure(figsize=(12, 8))
     ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=0))
     ax.coastlines(resolution='10m', color='k', linewidth=1)
@@ -70,7 +70,7 @@ for tdx, dt in enumerate(dts):
     ax.add_feature(feature.LAND, color='beige')
 
     gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
-                    linewidth=2, color='gray', alpha=0.5, linestyle='--')
+                      linewidth=2, color='gray', alpha=0.5, linestyle='--')
     gl.xlabels_top = False
     gl.ylabels_right = False
     gl.xformatter = LONGITUDE_FORMATTER
@@ -78,14 +78,18 @@ for tdx, dt in enumerate(dts):
     gl.xlocator = mticker.MultipleLocator(10)
     gl.ylocator = mticker.MultipleLocator(5)
     ax.grid(True)
-    cf = ax.contourf(xx, yy, vmax, cmap=cmap, levels=np.arange(5, 121, 5), extend='both')
-    cs = ax.contour(xx, yy, vmax, colors='k',levels=np.arange(5, 121, 5), linewidth=1, alpha=0.5)
+    cf = ax.contourf(xx, yy, vmax, cmap=cmap,
+                     levels=np.arange(5, 121, 5), extend='both')
+    cs = ax.contour(xx, yy, vmax, colors='k', levels=np.arange(
+        5, 121, 5), linewidth=1, alpha=0.5)
     ax.set_ylim((-50, 0))
     ax.set_xlim((80, 180))
-    plt.colorbar(cf, label='Potential intensity (m/s)', extend='max', orientation='horizontal', 
-                shrink=0.75, aspect=30, pad=0.055)
+    plt.colorbar(cf, label='Potential intensity (m/s)',
+                 extend='max', orientation='horizontal',
+                 shrink=0.75, aspect=30, pad=0.055)
     ax.set_title(dt.strftime("%B %Y"))
-    plt.savefig(os.path.join(dataPath, f"pcmin.{dt.strftime('%Y-%m')}.png"), bbox_inches='tight')
+    plt.savefig(os.path.join(dataPath, f"pcmin.{dt.strftime('%Y-%m')}.png"),
+                bbox_inches='tight')
     plt.close(fig)
 ncobj.close()
 
@@ -97,12 +101,12 @@ lat = ncobj.variables['latitude'][:]
 lon = ncobj.variables['longitude'][:]
 nctimes = ncobj.variables['time']
 dts = n2t(nctimes[:], units=nctimes.units,
-         calendar=nctimes.calendar)
+          calendar=nctimes.calendar)
 
 xx, yy = np.meshgrid(lon, lat)
 for tdx, dt in enumerate(dts):
     LOGGER.info(f"Plotting {dt.strftime('%B')}")
-    vmax = ncobj.variables['vmax'][tdx,:,:]
+    vmax = ncobj.variables['vmax'][tdx, :, :]
     fig = plt.figure(figsize=(12, 8))
     ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=0))
     ax.coastlines(resolution='10m', color='k', linewidth=1)
@@ -110,7 +114,7 @@ for tdx, dt in enumerate(dts):
     ax.add_feature(feature.LAND, color='beige')
 
     gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
-                    linewidth=2, color='gray', alpha=0.5, linestyle='--')
+                      linewidth=2, color='gray', alpha=0.5, linestyle='--')
     gl.xlabels_top = False
     gl.ylabels_right = False
     gl.xformatter = LONGITUDE_FORMATTER
@@ -118,14 +122,18 @@ for tdx, dt in enumerate(dts):
     gl.xlocator = mticker.MultipleLocator(10)
     gl.ylocator = mticker.MultipleLocator(5)
     ax.grid(True)
-    cf = ax.contourf(xx, yy, vmax, cmap=cmap, levels=np.arange(5, 121, 5), extend='both')
-    cs = ax.contour(xx, yy, vmax, colors='k',levels=np.arange(5, 121, 5), linewidth=1, alpha=0.5)
+    cf = ax.contourf(xx, yy, vmax, cmap=cmap,
+                     levels=np.arange(5, 121, 5), extend='both')
+    cs = ax.contour(xx, yy, vmax, colors='k', levels=np.arange(
+        5, 121, 5), linewidth=1, alpha=0.5)
     ax.set_ylim((-50, 0))
     ax.set_xlim((80, 180))
-    plt.colorbar(cf, label='Potential intensity (m/s)', extend='max', orientation='horizontal', 
-                shrink=0.75, aspect=30, pad=0.055)
+    plt.colorbar(cf, label='Potential intensity (m/s)', extend='max',
+                 orientation='horizontal',
+                 shrink=0.75, aspect=30, pad=0.055)
     ax.set_title(f"Mean potential intensity - {dt.strftime('%B')}")
-    plt.savefig(os.path.join(dataPath, f"pcmin.{dt.strftime('%m')}.png"), bbox_inches='tight')
+    plt.savefig(os.path.join(
+        dataPath, f"pcmin.{dt.strftime('%m')}.png"), bbox_inches='tight')
     plt.close(fig)
 ncobj.close()
 
