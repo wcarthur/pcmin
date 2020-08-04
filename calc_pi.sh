@@ -48,7 +48,7 @@ fi
 
 if [ X$NJOB == X1 ]; then
     $ECHO "This is the first year - it's not a restart"
-    export YEAR=2011
+    export YEAR=1979
     
 else
     export YEAR=$(($YEAR+1))
