@@ -336,7 +336,7 @@ def rHToMixRat(rh, tmp, prs, tmp_units="C"):
     :rtype: float
 
     """
-    es = satVapPr(convert(tmp, tmp_units, "C"))
+    es = satVapPr(convert(tmp, tmp_units, "C"), 'hPa')
     e = (rh / 100.) * es
     rat = vapPrToMixRat(e, prs)
     return rat
