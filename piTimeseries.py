@@ -10,7 +10,7 @@ import matplotlib.ticker as mticker
 import matplotlib.dates as mdates
 
 from netCDF4 import Dataset
-from cftime import num2date as cfnum2date
+from cftime import num2pydate as cfnum2date
 
 import numpy as np
 from datetime import datetime
@@ -73,7 +73,7 @@ def plotMonthlyMean(inputfile, outputpath, domain=(145, 160, -25, -10)):
     #io_vmax = calculateMean(inputfile, (100, 130, -25, -10))
 
     fig, ax = plt.subplots(figsize=(12, 6))
-    label = fr"{domain[0]}-{domain[1]}$^{{{\circ}}}$E, {domain[2]}-{domain[3]}$^{{{\circ}}}S"
+    label = fr"{domain[0]}-{domain[1]}$^\circ$E, {domain[2]}-{domain[3]}$^\circ$S"
     ax.plot(dts, vmax, color='r', label=label)
     locator = mdates.YearLocator(5)
     ax.xaxis.set_major_locator(locator)
@@ -87,7 +87,7 @@ def plotMonthlyMean(inputfile, outputpath, domain=(145, 160, -25, -10)):
 
 def plotMonthlyTrends(inputfile, outputpath, domain):
     dts, vmax = calculateMean(inputfile, domain)
-    label = fr"{domain[0]}-{domain[1]}$^{{{\circ}}}$E, {domain[2]}-{domain[3]}$^{{{\circ}}}S"
+    label = fr"{domain[0]}-{domain[1]}$^\circ$E, {domain[2]}-{domain[3]}$^\circ$S"
 
 
     for tdx in range(0, 12):
@@ -105,11 +105,11 @@ def plotMonthlyTrends(inputfile, outputpath, domain):
         ax.set_ylabel("Potential intensity (m/s)")
         ax.set_xlabel("Year")
         ax.set_title(f"Mean potential intensity - {dt.strftime('%B')}")
-        ax.set_ylim((40, 100))
+        ax.set_ylim((0, 100))
         ax.legend()
         fig.tight_layout()
 
-        plt.savefig(os.path.join(outputPath, f"pcmin.monmean.{dt.strftime('%m')}.png"), bbox_inches='tight')
+        plt.savefig(os.path.join(outputpath, f"pcmin.monmean.{dt.strftime('%m')}.png"), bbox_inches='tight')
         plt.close(fig)
 
 
@@ -128,5 +128,3 @@ if __name__ == "__main__":
     plotMonthlyMean(inputfile, outputpath, domain)
     plotMonthlyTrends(inputfile, outputpath, domain)
     
-
-
