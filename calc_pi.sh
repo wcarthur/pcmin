@@ -22,6 +22,8 @@ export PYTHONPATH=/g/data/w85/.local/lib/python3.7/site-packages:$PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:$HOME/pcmin
 # Suppresses an error related to HDF5 libraries:
 export HDF5_DISABLE_VERSION_CHECK=2
+umask 0022
+
 ECHO=/bin/echo
 
 if [ X$NJOBS == X ]; then

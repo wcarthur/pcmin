@@ -41,7 +41,7 @@ def main():
     p.add_argument('-v', '--verbose',
                    help="Verbose output", 
                    action='store_true')
-    p.add_argument('-y', '--year', help="Year to process (1979-2019)")
+    p.add_argument('-y', '--year', help="Year to process (1979-2020)")
 
     args = p.parse_args()
 
@@ -59,8 +59,6 @@ def main():
         except OSError:
             logFile = pjoin(os.getcwd(), 'pcmin.log')
 
-
-
     logLevel = config.get('Logging', 'LogLevel')
     verbose = config.getboolean('Logging', 'Verbose')
     datestamp = config.getboolean('Logging', 'Datestamp')
@@ -69,7 +67,6 @@ def main():
     if comm.size > 1 and comm.rank > 0:
         logFile += '-' + str(comm.rank)
         verbose = False
-
 
     if datestamp:
         base, ext = splitext(logFile)
@@ -111,7 +108,7 @@ def main():
 
         filedatestr = f"{startdate.strftime('%Y%m%d')}_{enddate.strftime('%Y%m%d')}"
 
-        tfile = pjoin(tpath, f'{year}', f'T_era5_aus_{filedatestr}.nc')
+        tfile = pjoin(tpath, f'{year}', f't_era5_aus_{filedatestr}.nc')
         try:
             assert(os.path.isfile(tfile))
         except AssertionError:
@@ -123,7 +120,7 @@ def main():
         tvar = nctools.ncGetVar(tobj, 't')
         tvar.set_auto_maskandscale(True)
 
-        rfile = pjoin(rpath, f'{year}', f'R_era5_aus_{filedatestr}.nc')
+        rfile = pjoin(rpath, f'{year}', f'r_era5_aus_{filedatestr}.nc')
         try:
             assert(os.path.isfile(rfile))
         except AssertionError:
@@ -145,7 +142,7 @@ def main():
 
 
         LOGGER.info(f"Loading SST data")
-        sstfile = pjoin(sstpath, f'{year}', f'SSTK_era5_global_{filedatestr}.nc' )
+        sstfile = pjoin(sstpath, f'{year}', f'sst_era5_global_{filedatestr}.nc' )
         try:
             assert(os.path.isfile(sstfile))
         except AssertionError:
@@ -160,7 +157,7 @@ def main():
         sstlat = nctools.ncGetDims(sstobj, 'latitude')
 
         LOGGER.info("Loading SLP data")
-        slpfile = pjoin(slppath, f'{year}', f'MSL_era5_global_{filedatestr}.nc')
+        slpfile = pjoin(slppath, f'{year}', f'msl_era5_global_{filedatestr}.nc')
         try:
             assert(os.path.isfile(slpfile))
         except AssertionError:
