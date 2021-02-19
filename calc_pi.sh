@@ -9,7 +9,13 @@
 #PBS -W umask=0022
 #PBS -v NJOBS,NJOB,YEAR
 #PBS -joe
-#PBS -lstorage=gdata/w85+gdata/ub4
+#PBS -lstorage=gdata/w85+gdata/rt52+scratch/w85
+
+# Run this with the following command line:
+#
+# qsub -v NJOBS=42,YEAR=1979 calc_pi.sh
+#
+# This will run the process for 42 years, starting 1979
 
 module purge
 module load pbs

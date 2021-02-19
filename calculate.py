@@ -27,7 +27,7 @@ from parallel import attemptParallel, disableOnWorkers
 
 LOGGER = logging.getLogger()
 
-r = Repo('')
+r = Repo('', search_parent_directories=True)
 commit = str(r.commit('HEAD'))
 
 def main():
@@ -101,14 +101,21 @@ def main():
     else:
         year = 2015
 
+    minLon = config.getfloat('Domain', 'MinLon')
+    maxLon = config.getfloat('Domain', 'MaxLon')
+    minLat = config.getfloat('Domain', 'MinLat')
+    maxLat = config.getfloat('Domain', 'MaxLat')
+
+    LOGGER.info(f"Domain: {minLon}-{maxLon}, {minLat}-{maxLat}")
+
     for month in range(1, 13):
         LOGGER.info(f"Processing {year}-{month}")
         startdate = datetime.datetime(year, month, 1)
         enddate = datetime.datetime(year, month, monthrange(year, month)[1])
 
-        filedatestr = f"{startdate.strftime('%Y%m%d')}_{enddate.strftime('%Y%m%d')}"
+        filedatestr = f"{startdate.strftime('%Y%m%d')}-{enddate.strftime('%Y%m%d')}"
 
-        tfile = pjoin(tpath, f'{year}', f't_era5_aus_{filedatestr}.nc')
+        tfile = pjoin(tpath, f'{year}', f't_era5_oper_pl_{filedatestr}.nc')
         try:
             assert(os.path.isfile(tfile))
         except AssertionError:
@@ -120,7 +127,7 @@ def main():
         tvar = nctools.ncGetVar(tobj, 't')
         tvar.set_auto_maskandscale(True)
 
-        rfile = pjoin(rpath, f'{year}', f'r_era5_aus_{filedatestr}.nc')
+        rfile = pjoin(rpath, f'{year}', f'r_era5_oper_pl_{filedatestr}.nc')
         try:
             assert(os.path.isfile(rfile))
         except AssertionError:
@@ -139,10 +146,17 @@ def main():
         # are then clipped to the same domain
         tlon = nctools.ncGetDims(tobj, 'longitude')
         tlat = nctools.ncGetDims(tobj, 'latitude')
+        LOGGER.debug(f"Latitude extents: {tlat.min()} - {tlat.max()}")
+        LOGGER.debug(f"Longitude extents: {tlon.min()} - {tlon.max()}")
 
+        varidx = np.where((tlon>=minLon) & (tlon<=maxLon))[0]
+        varidy = np.where((tlat>=minLat) & (tlat<=maxLat))[0]
+
+        templon = tlon[varidx]
+        templat = tlat[varidy]
 
         LOGGER.info(f"Loading SST data")
-        sstfile = pjoin(sstpath, f'{year}', f'sst_era5_global_{filedatestr}.nc' )
+        sstfile = pjoin(sstpath, f'{year}', f'sst_era5_oper_sfc_{filedatestr}.nc' )
         try:
             assert(os.path.isfile(sstfile))
         except AssertionError:
@@ -156,8 +170,11 @@ def main():
         sstlon = nctools.ncGetDims(sstobj, 'longitude')
         sstlat = nctools.ncGetDims(sstobj, 'latitude')
 
+        LOGGER.debug(f"SST latitude extents: {sstlat.min()} - {sstlat.max()}")
+        LOGGER.debug(f"SST longitude extents: {sstlon.min()} - {sstlon.max()}")
+
         LOGGER.info("Loading SLP data")
-        slpfile = pjoin(slppath, f'{year}', f'msl_era5_global_{filedatestr}.nc')
+        slpfile = pjoin(slppath, f'{year}', f'msl_era5_oper_sfc_{filedatestr}.nc')
         try:
             assert(os.path.isfile(slpfile))
         except AssertionError:
@@ -171,9 +188,8 @@ def main():
         # In the ERA5 data on NCI, surface variables are global, 
         # pressure variables are only over Australian region
         LOGGER.info("Getting intersection of grids")
-        lonx, sstidx, varidx = np.intersect1d(sstlon, tlon, return_indices=True)
-        laty, sstidy, varidy = np.intersect1d(sstlat, tlat[::-1], return_indices=True)
-        
+        lonx, sstidx, varidxx = np.intersect1d(sstlon, templon, return_indices=True)
+        laty, sstidy, varidyy = np.intersect1d(sstlat, templat[::-1], return_indices=True)
         nx = len(varidx)
         ny = len(varidy)
         LOGGER.info("Loading and converting SST and SLP data")
@@ -218,7 +234,7 @@ def main():
             while(terminated < p):
                 result, tdx = comm.recv(source=MPI.ANY_SOURCE, status=status, tag=MPI.ANY_TAG)
                 pmin[tdx, :, :], vmax[tdx, :, :] = result
-                LOGGER.debug(f"Mean PI: {np.nanmean(vmax[tdx, :, :])} m/s")
+                LOGGER.debug(f"Mean PI: {np.nanmean(vmax[tdx, :, :]):.2f} m/s")
                 d = status.source
 
                 if w < nt:
