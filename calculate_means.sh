@@ -4,23 +4,23 @@
 #PBS -N calcpimeans
 #PBS -m ae
 #PBS -M craig.arthur@ga.gov.au
-#PBS -lwalltime=24:00:00
+#PBS -lwalltime=4:00:00
 #PBS -lmem=32GB,ncpus=16,jobfs=4000MB
 #PBS -W umask=0022
 #PBS -joe
-#PBS -lstorage=gdata/w85
+#PBS -lstorage=gdata/w85+scratch/w85
 
 module load nco/4.9.2
 
-BASEPATH=/scratch/$PROJECT/$USER/pcmin
+BASEPATH=/scratch/$PROJECT/$USER/pcmin/test
 STARTYEAR=1979
 COUNTER=0
-for i in {0..40..1}; do
+for i in {0..42..1}; do
     for m in {1..12..1}; do
         YEAR=$(($STARTYEAR + $i))
         ENDDATE=`date -d "$YEAR/$m/1 +1 month -1 day" "+%Y%m%d"`
         STARTDATE=`date -d "$YEAR/$m/1" "+%Y%m%d"`
-        DATESTR=$STARTDATE\_$ENDDATE
+        DATESTR=$STARTDATE\-$ENDDATE
         INPUTFILE=$BASEPATH/pcmin.$DATESTR.nc
         MONTHFMT=`date -d "$YEAR/$m/1" "+%Y%m"`
         OUTPUTFILE=$BASEPATH/monthly/pcmin.$MONTHFMT.nc

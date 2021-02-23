@@ -57,9 +57,9 @@ else
 fi
 $ECHO "Calculating daily PI for $YEAR"
 
-cd $SCRATCH/pcmin
+cd $SCRATCH/pcmin/test
 
-cdo mergetime pcmin.${YEAR}????_${YEAR}????.nc pcmin.${YEAR}0101_${YEAR}1231.nc > calculate_daily_mean.stdout.$YEAR 2>&1
+cdo mergetime pcmin.${YEAR}????-${YEAR}????.nc pcmin.${YEAR}0101-${YEAR}1231.nc > calculate_daily_mean.stdout.$YEAR 2>&1
 if [[ $? -ne 0 ]]; then
     $ECHO "The command appears to have failed for ${YEAR}"
     exit 0
