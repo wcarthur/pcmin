@@ -17,7 +17,7 @@ module load dot
 
 module load netcdf/4.6.3
 module load cdo/1.9.8
-module load nco/4.9.1
+module load nco/4.9.2
 
 module load openmpi
 
@@ -57,7 +57,7 @@ else
 fi
 $ECHO "Calculating daily PI for $YEAR"
 
-cd $SCRATCH/pcmin/test
+cd $SCRATCH/pcmin/daily
 
 cdo mergetime pcmin.${YEAR}????-${YEAR}????.nc pcmin.${YEAR}0101-${YEAR}1231.nc > calculate_daily_mean.stdout.$YEAR 2>&1
 if [[ $? -ne 0 ]]; then
