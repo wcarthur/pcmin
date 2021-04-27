@@ -19,7 +19,7 @@ module load netcdf/4.6.3
 module load cdo/1.9.8
 module load nco/4.9.2
 
-module load openmpi
+module load openmpi/4.0.3
 
 # Suppresses an error related to HDF5 libraries:
 export HDF5_DISABLE_VERSION_CHECK=2

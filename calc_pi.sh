@@ -23,7 +23,7 @@ module load dot
 
 module load python3/3.7.4
 module load netcdf/4.6.3
-module load openmpi
+module load openmpi/4.0.3
 export PYTHONPATH=/g/data/w85/.local/lib/python3.7/site-packages:$PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:$HOME/pcmin
 # Suppresses an error related to HDF5 libraries:

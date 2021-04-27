@@ -119,8 +119,8 @@ def main():
         try:
             assert(os.path.isfile(tfile))
         except AssertionError:
-            LOGGER.warn(f"Input file is missing: {tfile}")
-            LOGGER.warn(f"Skipping month {month}")
+            LOGGER.warning(f"Input file is missing: {tfile}")
+            LOGGER.warning(f"Skipping month {month}")
             continue
 
         tobj = nctools.ncLoadFile(tfile)
@@ -131,8 +131,8 @@ def main():
         try:
             assert(os.path.isfile(rfile))
         except AssertionError:
-            LOGGER.warn(f"Input file is missing: {rfile}")
-            LOGGER.warn(f"Skipping month {month}")
+            LOGGER.warning(f"Input file is missing: {rfile}")
+            LOGGER.warning(f"Skipping month {month}")
             continue
         robj = nctools.ncLoadFile(rfile)
         rvar = nctools.ncGetVar(robj, 'r')
@@ -160,8 +160,8 @@ def main():
         try:
             assert(os.path.isfile(sstfile))
         except AssertionError:
-            LOGGER.warn(f"Input file is missing: {sstfile}")
-            LOGGER.warn(f"Skipping month {month}")
+            LOGGER.warning(f"Input file is missing: {sstfile}")
+            LOGGER.warning(f"Skipping month {month}")
             continue
 
         sstobj = nctools.ncLoadFile(sstfile)
@@ -178,8 +178,8 @@ def main():
         try:
             assert(os.path.isfile(slpfile))
         except AssertionError:
-            LOGGER.warn(f"Input file is missing: {slpfile}")
-            LOGGER.warn(f"Skipping month {month}")
+            LOGGER.warning(f"Input file is missing: {slpfile}")
+            LOGGER.warning(f"Skipping month {month}")
             continue
         slpobj = nctools.ncLoadFile(slpfile)
         slpvar = nctools.ncGetVar(slpobj, 'msl')

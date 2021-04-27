@@ -11,11 +11,12 @@
 #PBS -lstorage=gdata/w85+scratch/w85
 
 module load nco/4.9.2
+module load cdo/1.9.8
 
 BASEPATH=/scratch/$PROJECT/$USER/pcmin
 STARTYEAR=1979
 COUNTER=0
-for i in {0..42..1}; do
+for i in {0..41..1}; do
     for m in {1..12..1}; do
         YEAR=$(($STARTYEAR + $i))
         ENDDATE=`date -d "$YEAR/$m/1 +1 month -1 day" "+%Y%m%d"`
@@ -25,7 +26,7 @@ for i in {0..42..1}; do
         MONTHFMT=`date -d "$YEAR/$m/1" "+%Y%m"`
         OUTPUTFILE=$BASEPATH/monthly/pcmin.$MONTHFMT.nc
         echo $INPUTFILE
-        ncwa -x -v time -a time $INPUTFILE -O -o $OUTPUTFILE
+        ncwa -C -x -v time -a time $INPUTFILE -O -o $OUTPUTFILE
         if [[ $? -ne 0 ]]; then
             echo "Looks like the command failed when processing $INPUTFILE"
         else
