@@ -26,7 +26,7 @@ for i in {0..41..1}; do
         MONTHFMT=`date -d "$YEAR/$m/1" "+%Y%m"`
         OUTPUTFILE=$BASEPATH/monthly/pcmin.$MONTHFMT.nc
         echo $INPUTFILE
-        ncwa -C -x -v time -a time $INPUTFILE -O -o $OUTPUTFILE
+        ncwa -x -v time -a time $INPUTFILE -O -o $OUTPUTFILE
         if [[ $? -ne 0 ]]; then
             echo "Looks like the command failed when processing $INPUTFILE"
         else
@@ -39,10 +39,23 @@ for i in {0..41..1}; do
 done
 
 # Create a single file for all monthly mean data
-ncrcat $BASEPATH/annual/pcmin.[0-9][0-9][0-9][0-9].nc $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc
+ncrcat $BASEPATH/annual/pcmin.[0-9][0-9][0-9][0-9].nc -O -o $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc
 
 # Calculate monthly long-term mean and anomalies:
-cdo ymonmean $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc $BASEPATH/monthly/pcmin.monltm.nc
-cdo ymonsub $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc $BASEPATH/monthly/pcmin.monltm.nc $BASEPATH/monthly/pcmin.$STARTYEAR-$YEAR.anom.nc
+cdo -O ymonmean $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc $BASEPATH/monthly/pcmin.monltm.nc
+cdo -O ymonsub $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc $BASEPATH/monthly/pcmin.monltm.nc $BASEPATH/monthly/pcmin.$STARTYEAR-$YEAR.anom.nc
 
-#cdo -ydaymean pcmin.*_*.nc pcmin.dailyltm.nc
+# Monthly stats:
+cdo -O ymonmax $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc $BASEPATH/monthly/pcmin.monmax.nc
+cdo -O ymonmin $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc $BASEPATH/monthly/pcmin.monmin.nc
+cdo -O ymonstd $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc $BASEPATH/monthly/pcmin.monstd.nc
+cdo -O ymonpctl,10 $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc $BASEPATH/monthly/pcmin.monmin.nc $BASEPATH/monthly/pcmin.monmax.nc $BASEPATH/monthly/pcmin.monp10.nc
+cdo -O ymonpctl,90 $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc $BASEPATH/monthly/pcmin.monmin.nc $BASEPATH/monthly/pcmin.monmax.nc $BASEPATH/monthly/pcmin.monp90.nc
+
+
+# Trend of anomalies:
+cdo -O trend $BASEPATH/monthly/pcmin.$STARTYEAR-$YEAR.anom.nc $BASEPATH/trend/pcmin.$STARTYEAR-$YEAR.a.nc $BASEPATH/trend/pcmin.$STARTYEAR-$YEAR.b.nc
+
+# Regional trend
+cdo -outputtab,date,value -selct,name=vmax -fldmean -setmissval,nan, sellonlatbox,145,160,-25,-10 $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc > $BASEPATH/trend/ERA5.CS.mean.$STARTYEAR-$YEAR.dat
+cdo -outputtab,date,value -selct,name=vmax -fldmean -setmissval,nan, sellonlatbox,100,120,-25,-10 $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc > $BASEPATH/trend/ERA5.IO.mean.$STARTYEAR-$YEAR.dat
