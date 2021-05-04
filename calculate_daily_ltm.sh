@@ -4,7 +4,7 @@
 #PBS -N calc_dltm
 #PBS -m ae
 #PBS -M craig.arthur@ga.gov.au
-#PBS -lwalltime=24:00:00
+#PBS -lwalltime=48:00:00
 #PBS -lmem=64GB,ncpus=16,jobfs=4000MB
 #PBS -W umask=0022
 #PBS -joe
@@ -25,7 +25,7 @@ SCRATCH=/scratch/$PROJECT/$USER
 
 BASEPATH=/scratch/$PROJECT/$USER/pcmin/
 
-for m in {1..12..1}; do
+for m in {6..12..1}; do
     MONTHSTR=`date -d "2020/$m/1" "+%m"`
     STARTMONTH=`date -d "2020/$m/1" "+%m"`
     ENDMONTH=`date -d "2020/$m/1 +1 month -1 day" "+%m"`
