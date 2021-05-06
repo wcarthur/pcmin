@@ -9,6 +9,8 @@
 #PBS -W umask=0022
 #PBS -v NJOBS,NJOB,YEAR
 #PBS -joe
+#PBS -o /home/547/cxa547/pcmin/logs/calcpi.out.log
+#PBS -e /home/547/cxa547/pcmin/logs/calcpi.err.log
 #PBS -lstorage=gdata/w85+gdata/rt52+scratch/w85
 
 # Run this with the following command line:
@@ -65,7 +67,7 @@ $ECHO "Processing PI for $YEAR"
 
 cd $HOME/pcmin
 
-mpirun -np $PBS_NCPUS python3 calculate.py -c calculate.ini -y $YEAR > calculate.stdout.$YEAR 2>&1
+mpirun -np $PBS_NCPUS python3 calculate.py -c calculate.ini -y $YEAR > $HOME/pcmin/logs/calculate.stdout.$YEAR 2>&1
 
 if [ $NJOB -lt $NJOBS ]; then
     NJOB=$(($NJOB+1))
