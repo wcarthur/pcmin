@@ -27,7 +27,7 @@ SCRATCH=/scratch/$PROJECT/$USER
 
 BASEPATH=/scratch/$PROJECT/$USER/pcmin/
 
-for m in {6..12..1}; do
+for m in {1..12..1}; do
     MONTHSTR=`date -d "2020/$m/1" "+%m"`
     STARTMONTH=`date -d "2020/$m/1" "+%m"`
     ENDMONTH=`date -d "2020/$m/1 +1 month -1 day" "+%m"`
