@@ -8,6 +8,8 @@
 #PBS -lmem=64GB,ncpus=16,jobfs=4000MB
 #PBS -W umask=0022
 #PBS -joe
+#PBS -e /home/547/cxa547/pcmin/logs/calculate_dltm.error.log
+#PBS -o /home/547/cxa547/pcmin/logs/calculate_dltm.output.log
 #PBS -lstorage=scratch/w85
 
 module purge

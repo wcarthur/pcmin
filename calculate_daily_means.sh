@@ -9,6 +9,8 @@
 #PBS -W umask=0022
 #PBS -v NJOBS,NJOB,YEAR
 #PBS -joe
+#PBS -e /home/547/cxa547/pcmin/logs/calculate_daily_means.error.log
+#PBS -o /home/547/cxa547/pcmin/logs/calculate_daily_means.output.log
 #PBS -lstorage=scratch/w85
 
 module purge
@@ -59,7 +61,7 @@ $ECHO "Calculating daily PI for $YEAR"
 
 cd $SCRATCH/pcmin/daily
 
-cdo mergetime pcmin.${YEAR}????-${YEAR}????.nc pcmin.${YEAR}0101-${YEAR}1231.nc > calculate_daily_mean.stdout.$YEAR 2>&1
+cdo mergetime pcmin.${YEAR}????-${YEAR}????.nc pcmin.${YEAR}0101-${YEAR}1231.nc > $HOME/pcmin/logs/calculate_daily_mean.stdout.$YEAR 2>&1
 if [[ $? -ne 0 ]]; then
     $ECHO "The command appears to have failed for ${YEAR}"
     exit 0
