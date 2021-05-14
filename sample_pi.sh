@@ -8,6 +8,8 @@
 #PBS -lmem=32GB,ncpus=16,jobfs=4000MB
 #PBS -W umask=0002
 #PBS -joe
+#PBS -o /home/547/cxa547/pcmin/logs/samplepi.out.log
+#PBS -e /home/547/cxa547/pcmin/logs/samplepi.err.log
 #PBS -lstorage=gdata/w85+scratch/w85
 
 module purge
@@ -24,5 +26,5 @@ export HDF5_DISABLE_VERSION_CHECK=2
 
 cd $HOME/pcmin
 
-#python3 $HOME/pcmin/sample.py -c $HOME/pcmin/sample.ini > $HOME/pcmin/sample_pi.stdout 2>&1
-python3 $HOME/pcmin/sample_tcha.py -c $HOME/pcmin/sample_tcha.ini > $HOME/pcmin/sample_tcha.stdout 2>&1
+python3 $HOME/pcmin/sample.py -c $HOME/pcmin/sample.ini > $HOME/pcmin/logs/sample_pi.stdout 2>&1
+#python3 $HOME/pcmin/sample_tcha.py -c $HOME/pcmin/sample_tcha.ini > $HOME/pcmin/sample_tcha.stdout 2>&1
