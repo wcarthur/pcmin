@@ -1,5 +1,8 @@
 __pycache__/
 logs/
+.ipynb_checkpoints/
+.vscode/
+
 
 *.pyd
 *.pyc
@@ -12,3 +15,4 @@ logs/
 *.o[0-9]*
 *.stdout.*
 sitecustomize.py
+pcmin.code-workspace

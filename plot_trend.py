@@ -13,8 +13,8 @@ sns.set_palette('Paired')
 LOCATOR = YearLocator(10)
 FORMATTER = DateFormatter("%Y")
 
-datapath = "C:/WorkSpace/data/pi/trend/CS"
-RCP = "RCP45"
+datapath = "C:/WorkSpace/data/pi/trend/IO"
+RCP = "RCP85"
 modelnames = ["ACCESS1-0Q", "ACCESS1-3Q", "CCSM4Q",
               "CNRM-CM5Q", "CSIRO-Mk3-6-0Q", "GFDL-CM3Q",
               "GFDL-ESM2MQ", "HadGEM2Q", "MIROC5Q",
@@ -22,8 +22,8 @@ modelnames = ["ACCESS1-0Q", "ACCESS1-3Q", "CCSM4Q",
 
 filelist = [f for f in os.listdir(datapath) if RCP in f]
 
-erafile = os.path.join(datapath, "ERA5.CS.mean.dat")
-edf = pd.read_csv(os.path.join(datapath, "ERA5.CS.mean.dat"),
+erafile = os.path.join(datapath, "ERA5.IO.mean.dat")
+edf = pd.read_csv(os.path.join(datapath, "ERA5.IO.mean.dat"),
                  delimiter=' ', names=['date', 'vmax'],
                  skiprows=1, header=None, skipinitialspace=True,
                  index_col=False)

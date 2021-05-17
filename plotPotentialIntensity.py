@@ -47,7 +47,7 @@ palette = [(1.000, 1.000, 1.000), (0.000, 0.627, 0.235), (0.412, 0.627, 0.235),
 cmap = sns.blend_palette(palette, as_cmap=True)
 
 dataPath = "C:/WorkSpace/data/pi"
-monmean = os.path.join(dataPath, "pcmin.1979-2019.nc")
+monmean = os.path.join(dataPath, "pcmin.1979-2020.nc")
 ncobj = Dataset(monmean, 'r')
 
 lat = ncobj.variables['latitude'][:]
