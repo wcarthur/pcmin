@@ -90,7 +90,7 @@ def sampleMonthlyPI(dt, lon, lat, filepath, distance):
         ncobj = Dataset(filepath)
     except:
         LOGGER.exception(f"Error loading {filepath}")
-        raise
+        return np.nan, np.nan
 
     nctimes = ncobj.variables['time'] # Only retrieve the variable, not the values
     nclon = ncobj.variables['longitude'][:]
@@ -139,7 +139,7 @@ def sampleDailyLTMPI(dt, lon, lat, filepath, distance):
         ncobj = Dataset(filepath)
     except:
         LOGGER.exception(f"Error loading {filepath}")
-        raise
+        return np.nan, np.nan
 
     nctimes = ncobj.variables['time'] # Only retrieve the variable, not the values
     nclon = ncobj.variables['longitude'][:]
@@ -179,14 +179,15 @@ def sampleDailyPI(dt, lon, lat, filepath, distance):
     startdate = datetime(dt.year, dt.month, 1)
     enddate = datetime(dt.year, dt.month, 
                        monthrange(dt.year, dt.month)[1])
-    filedatestr = f"{startdate.strftime('%Y%m%d')}_{enddate.strftime('%Y%m%d')}"
+    filedatestr = f"{startdate.strftime('%Y%m%d')}-{enddate.strftime('%Y%m%d')}"
     tfile = pjoin(filepath,  f'pcmin.{filedatestr}.nc')
     LOGGER.debug(f"Loading {tfile}")
     try:
         ncobj = Dataset(tfile)
     except:
         LOGGER.exception(f"Error loading {tfile}")
-        raise
+        return np.nan, np.nan
+
 
     nctimes = ncobj.variables['time'] # Only retrieve the variable, not the values
     nclon = ncobj.variables['longitude'][:]
