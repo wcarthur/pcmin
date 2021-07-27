@@ -2,13 +2,12 @@ import os
 import sys
 import logging
 import argparse
-import cftime
-
+from os.path import join as pjoin, realpath, isdir, dirname, splitext
 from datetime import datetime
 from calendar import monthrange
 from configparser import ConfigParser
 from netCDF4 import Dataset
-from os.path import join as pjoin, realpath, isdir, dirname, splitext
+import cftime
 
 import numpy as np
 import pandas as pd
@@ -73,7 +72,7 @@ def getidx(gridlon, gridlat, ptlon, ptlat, distance=500):
 def sampleMonthlyPI(dt, lon, lat, filepath, distance):
     """
     Sample monthly mean PI
-    
+
     :param dt: :class:`datetime.datetime` object containing the 
                date of an observation
     :param float lon: Longitude of the observation
@@ -225,6 +224,8 @@ def main():
                    help="Verbose output", 
                    action='store_true')
     p.add_argument('-y', '--year', help="Year to process (1979-2019)")
+    p.add_argument('-d', '--debug', help="Debug on exceptions",
+                   action='store_true')
 
     args = p.parse_args()
 
@@ -249,10 +250,6 @@ def main():
     datestamp = config.getboolean('Logging', 'Datestamp')
     if args.verbose:
         verbose = True
-    """if comm.size > 1 and comm.rank > 0:
-        logFile += '-' + str(comm.rank)
-        verbose = False"""
-
 
     if datestamp:
         base, ext = splitext(logFile)
@@ -312,4 +309,15 @@ def main():
     LOGGER.info(f"Finished {sys.argv[0]}")
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except:
+        import trackeback
+        import code
+        type, value, tb = sys.exc_info()
+        traceback.print_exc()
+        last_frame = lambda tb=tb: last_frame(tb.tb_next) if tb.tb_next else tb
+        frame = last_frame().tb_frame
+        ns = dict(frame.f_globals)
+        ns.update(frame.f_locals)
+        code.interact(local=ns)

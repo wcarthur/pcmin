@@ -5,19 +5,16 @@ calculate gridded potential intensity values.
 
 import os
 import sys
-import pdb
 import logging
 import argparse
 import datetime
-import cftime
 from calendar import monthrange
 from time import sleep
 from configparser import ConfigParser
 from os.path import join as pjoin, realpath, isdir, dirname, splitext
 
+import cftime
 import numpy as np
-from netCDF4 import Dataset
-
 from git import Repo
 
 import metutils
@@ -27,8 +24,8 @@ from parallel import attemptParallel, disableOnWorkers
 
 LOGGER = logging.getLogger()
 
-r = Repo('', search_parent_directories=True)
-commit = str(r.commit('HEAD'))
+repo = Repo('', search_parent_directories=True)
+COMMIT = str(repo.commit('HEAD'))
 
 def main():
     """
@@ -89,7 +86,7 @@ def main():
 
     LOGGER.info(f"Started {sys.argv[0]} (pid {os.getpid()})")
     LOGGER.info(f"Log file: {logfile} (detail level {logLevel})")
-    LOGGER.info(f"Code version: f{commit}")
+    LOGGER.info(f"Code version: f{COMMIT}")
 
     tpath = config.get('Input', 'Temp')
     rpath = config.get('Input', 'Humidity')
@@ -258,17 +255,19 @@ def main():
                 t = metutils.convert(tvar[W, :, varidy, varidx], tvar.units, 'C')
                 r = metutils.rHToMixRat(rvar[W, :, varidy, varidx], t, pp, 'C')
                 r = np.where(r < 0, 0, r)
-                results = calculate(sst[W,:,:], slp[W, :, :], pp, t, r, levels)
+                results = calculate(sst[W, :, :], slp[W, :, :], pp, t, r, levels)
                 LOGGER.debug(f"Finished time {times[W]} on node {comm.rank}")
                 comm.send((results, W), dest=0, tag=status.tag)
-        elif (comm.size==1) and (comm.rank == 0):
+        elif (comm.size == 1) and (comm.rank == 0):
             # We're working on a single processor:
             for tdx in range(nt):
                 LOGGER.debug(f"Processing time {times[W]}")
                 t = metutils.convert(tvar[tdx, :, varidy, varidx], tvar.units, 'C')
                 r = metutils.rHToMixRat(rvar[tdx, :, varidy, varidx], t, pp, 'C')
                 r = np.where(r < 0, 0, r)
-                pmin[tdx, :, :], vmax[tdx, :, :] = calculate(sst[tdx,:,:], slp[tdx, :, :], pp, t, r, levels)
+                pmin[tdx, :, :], vmax[tdx, :, :] = calculate(sst[tdx, :, :],
+                                                             slp[tdx, :, :],
+                                                             pp, t, r, levels)
 
 
         if comm.rank == 0:
@@ -373,13 +372,13 @@ def saveData(outputFile, pmin, vmax, lon, lat, times):
                
     gatts = {
         'history': history,
-        'version': commit,
+        'version': COMMIT,
     }
 
     nctools.ncSaveGrid(outputFile, dimensions, variables, nodata=-9999,
-            datatitle='Maximum potential intensity', gatts=gatts,
-            writedata=True, keepfileopen=False, zlib=True, 
-            complevel=4, lsd=None)
+                       datatitle='Maximum potential intensity', gatts=gatts,
+                       writedata=True, keepfileopen=False, zlib=True,
+                       complevel=4, lsd=None)
     return
 
 if __name__ == "__main__":
