@@ -303,8 +303,9 @@ def main():
         obstc.loc[idx, 'dailyltmpmin'] = pmin
         vmax, pmin = sampleMonthlyPI(row['datetime'], row['lon'], row['lat'], monthlyMeanPath, distance)
         obstc.loc[idx, 'monthlyvmax'] = vmax
-        obstc.loc[idx, 'monthlypmin'] = pmin        
+        obstc.loc[idx, 'monthlypmin'] = pmin
 
+    LOGGER.info(f"Writing data to {outputFile}")
     obstc.to_csv(outputFile, float_format="%.2f")
     LOGGER.info(f"Finished {sys.argv[0]}")
 
