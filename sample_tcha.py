@@ -45,12 +45,6 @@ def loadTrackFile(trackfile):
         LOGGER.exception(f"Failed to open {trackfile}")
         LOGGER.exception(f"{sys.exc_info()[0]}")
 
-    print(df.columns)
-
-    #print(df.datetime[0])
-    #df['dt'] = df.groupby('CycloneNumber')['datetime'].apply(lambda x: np.diff(x))
-    #print(df['dt'])
-    #df['dt'] = df['dt'].transform(lambda x: x.total_seconds())
     df = calculateMaxWind(df, dtname='datetime')
 
     return df
@@ -73,7 +67,6 @@ def calculateMaxWind(df, dtname='ISO_TIME'):
     varidx = np.ones(len(idx))
     varidx[1:][idx[1:]==idx[:-1]] = 0
     
-    #dt = (df[dtname] - df[dtname].shift()).fillna(pd.Timedelta(seconds=0)).apply(lambda x: x / np.timedelta64(1,'h')).astype('int64') % (24*60)
     df['vmax'] = maxWindSpeed(varidx, np.ones(len(df.index)),
                               df.lon.values, df.lat.values,
                               df.CentralPressure.values, 

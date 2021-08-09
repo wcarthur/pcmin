@@ -61,3 +61,4 @@ cdo -O trend $BASEPATH/monthly/pcmin.$STARTYEAR-$YEAR.anom.nc $BASEPATH/trend/pc
 # Regional trend
 cdo -outputtab,date,value -select,name=vmax -fldmean -setmissval,nan -sellonlatbox,145,160,-25,-10 $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc > $BASEPATH/trend/ERA5.CS.mean.$STARTYEAR-$YEAR.dat
 cdo -outputtab,date,value -select,name=vmax -fldmean -setmissval,nan -sellonlatbox,100,120,-25,-10 $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc > $BASEPATH/trend/ERA5.IO.mean.$STARTYEAR-$YEAR.dat
+cdo -outputtab,date,value -select,name=vmax -fldmean -setmissval,nan -sellonlatbox,145,160,-30,-25 $BASEPATH/annual/pcmin.$STARTYEAR-$YEAR.nc > $BASEPATH/trend/ERA5.SEQ.mean.$STARTYEAR-$YEAR.dat
