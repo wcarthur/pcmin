@@ -1,26 +1,32 @@
 # Potential intensity of tropical cyclones
 
-This code is used to calculate the potential intensity of tropical cyclones (TCs), using the code published by Kerry Emanuel. It is essentially a wrapper around the FORTRAN subroutine provided in the links below, for use with ERA5 Reanalysis data available at the National Computational Facility (NCI) (project `ub4`).
+This code is used to calculate the potential intensity of tropical cyclones (TCs), using the code published by Kerry Emanuel. It is essentially a wrapper around the FORTRAN subroutine provided in the links below, for use with ERA5 Replicated Data: Single and pressure-levels data available at the National Computational Facility (NCI) (project `rt52`).
 
-The code is intended to be run on the NCI's `gadi` machine, with access to `ub4`. There is a significant amount of bespoke code in this, designed around the folder structure and actual data holdings of the ERA5 data at NCI. 
+The code is intended to be run on the NCI's `gadi` machine, with access to `rt52`. There is a significant amount of bespoke code in this, designed around the folder structure and actual data holdings of the ERA5 data at NCI.
 
-For example, pressure level data is held only for a limited subdomain over Australia and southeast Asia, while surface variables have global coverage. This requires some trick manipulation of the coordinate indices to ensure they align correctly. 
+For example, pressure level data is held only for a limited subdomain over Australia and southeast Asia, while surface variables have global coverage. This requires some trick manipulation of the coordinate indices to ensure they align correctly.
 
-Note also the pressure level data is ordered from lowest pressure to highest pressure - highest to lowest altitude. The pcmin.f subroutine requires the input to be in the opposite order. Before using the code here, please check the ordering of the pressure level data. 
+Note also the pressure level data is ordered from lowest pressure to highest pressure - highest to lowest altitude. The `pcmin.f` subroutine requires the input to be in the opposite order. Before using the code here, please check the ordering of the pressure level data.
 
 ### Dependencies
 
 * python-netCDF4
 * numpy
+* scipy
+* pandas
 * cftime
 * mpi4py
 * gitpython
+* seaborn
+* cartopy
+* shapely
+* matplotlib
 
 ### Installation
 
-We use the standard Python setup tools to build the extension, making use of the `numpy.f2py` module to automatically wrap the FORTRAN code with a Python interface
+We use the standard Python setup tools to build the extension, making use of the `numpy.f2py` module to automatically wrap the FORTRAN code with a Python interface. You can build the Pyhton wrapper using a standard python setup call:
 
-`python setup.py install` 
+`python setup.py install`
 
 ### Running the code
 
@@ -51,14 +57,16 @@ There are also a couple of shell scripts, built around either `cdo` or `nco`, to
 
 As a general rule, the `nco` tools are faster to calculate means, etc., but `cdo` provides a more intuitive command line experience, especially when calculating statistics other than simple means.
 
+`calculate_daily_ltm.sh` calculates a daily long term mean of potential intensity.
 
+`calculate_means.sh` calculates monthly mean values for all available date ranges, monthly long term means, standard deviation and (10th and 90th) percentiles, trends and time series of trend for a number of sub-regions.
 
 
 ### Links
 
 * Reference: https://emanuel.mit.edu/limits-hurricane-intensity 
 * Code: ftp://texmex.mit.edu/pub/emanuel/TCMAX/
-* ERA5 data: https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5 
-* Reanalysis project (ub4): https://my.nci.org.au/mancini/project/ub4
+* ERA5 data: https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5
+* Reanalysis project (rt52): https://my.nci.org.au/mancini/project/rt52
 * CDO (Climate Data Operators): https://www.mpimet.mpg.de/cdo/
 * NCO (NetCDF Operators): http://nco.sourceforge.net/
