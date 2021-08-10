@@ -70,3 +70,8 @@ As a general rule, the `nco` tools are faster to calculate means, etc., but `cdo
 * Reanalysis project (rt52): https://my.nci.org.au/mancini/project/rt52
 * CDO (Climate Data Operators): https://www.mpimet.mpg.de/cdo/
 * NCO (NetCDF Operators): http://nco.sourceforge.net/
+
+### Citing this code
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5173568.svg)](https://doi.org/10.5281/zenodo.5173568)
+
