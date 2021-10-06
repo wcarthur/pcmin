@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<oai_dc:dc xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
+  <dc:creator>Craig Arthur</dc:creator>
+  <dc:date>2021-08-10</dc:date>
+  <dc:description>Initial beta release of the pcmin code</dc:description>
+  <dc:identifier>https://zenodo.org/record/5173569</dc:identifier>
+  <dc:identifier>10.5281/zenodo.5173569</dc:identifier>
+  <dc:identifier>oai:zenodo.org:5173569</dc:identifier>
+  <dc:relation>url:https://github.com/wcarthur/pcmin/tree/v0.1</dc:relation>
+  <dc:relation>doi:10.5281/zenodo.5173568</dc:relation>
+  <dc:rights>info:eu-repo/semantics/openAccess</dc:rights>
+  <dc:title>wcarthur/pcmin: v0.1 beta release</dc:title>
+  <dc:type>info:eu-repo/semantics/other</dc:type>
+  <dc:type>software</dc:type>
+</oai_dc:dc>
