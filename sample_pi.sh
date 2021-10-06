@@ -26,5 +26,5 @@ export HDF5_DISABLE_VERSION_CHECK=2
 
 cd $HOME/pcmin
 
-#python3 $HOME/pcmin/sample.py -c $HOME/pcmin/sample.ini > $HOME/pcmin/logs/sample_pi.stdout 2>&1
-python3 $HOME/pcmin/sample_tcha.py -c $HOME/pcmin/sample_tcha.ini > $HOME/pcmin/logs/sample_tcha.stdout 2>&1
+python3 $HOME/pcmin/sample.py -c $HOME/pcmin/sample.ini > $HOME/pcmin/logs/sample_pi.stdout 2>&1
+#python3 $HOME/pcmin/sample_tcha.py -c $HOME/pcmin/sample_tcha.ini > $HOME/pcmin/logs/sample_tcha.stdout 2>&1
