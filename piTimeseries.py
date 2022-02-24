@@ -12,6 +12,9 @@ import matplotlib.dates as mdates
 from netCDF4 import Dataset
 from cftime import num2pydate as cfnum2date
 
+import xarray as xr
+import pandas as pd
+
 import numpy as np
 from datetime import datetime
 
@@ -43,6 +46,8 @@ palette = sns.color_palette()
 years = mdates.YearLocator()   # every year
 months = mdates.MonthLocator()  # every month
 years_fmt = mdates.DateFormatter('%Y')
+
+erasource = "ECMWF Reanalysis version 5\nhttps://cds.climate.copernicus.eu/cdsapp"
 
 def calculateMean(inputfile, domain, varname='vmax'):
     """
@@ -81,15 +86,53 @@ def plotMonthlyMean(inputfile, outputpath, domain=(145, 160, -25, -10)):
     ax.set_ylabel("Potential intensity (m/s)")
     ax.set_xlabel("Year")
     ax.legend()
+    plt.text(-0.1, -0.2, f"Source: {erasource}",
+             transform=ax.transAxes,
+             fontsize='xx-small', ha='left',)
+    plt.text(1.1, -0.2, f"Created: {datetime.now():%Y-%m-%d %H:%M %z}",
+             transform=ax.transAxes,
+             fontsize='xx-small', ha='right')
     fig.tight_layout()
     plt.savefig(os.path.join(outputpath, "pcmin.monmean.png"), bbox_inches='tight')
     return
 
 def plotMonthlyTrends(inputfile, outputpath, domain):
+
+    """
+    ds = xr.open_dataset(inputfile)
+    minlon, maxlon, minlat, maxlat = domain
     dts, vmax = calculateMean(inputfile, domain)
     label = fr"{domain[0]}-{domain[1]}$^\circ$E, {domain[2]}-{domain[3]}$^\circ$S"
+    for idx, da in ds.sel(latitude=slice(minlat, maxlat),
+                          longitude=slice(minlon, maxlon)
+                        ).groupby(ds.time.dt.month):
+        breakpoint()
+        LOGGER.info(f"Plotting monthly mean PI for {pd.to_datetime(da.time)[0].strftime('%B')} (XARRAY)")
+        fig, ax = plt.subplots(figsize=(12, 6))
+        sns.regplot(x=da.time.dt.year.values,
+                    y=da.vmax.mean(dim=['longitude', 'latitude']),
+                    label=label, ax=ax, scatter=False, truncate=True,
+                    color=palette[0], line_kws={'alpha':0.5, 'linestyle':'--'})
+        ax.plot(da.vmax.mean(dim=['longitude', 'latitude']))
+        locator = mdates.YearLocator(5) 
+        ax.xaxis.set_major_locator(locator)
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+        ax.set_ylabel("Potential intensity (m/s)")
+        ax.set_xlabel("Year")
+        ax.set_title(f"Mean potential intensity - {pd.to_datetime(da.time)[0].strftime('%B')}")
+        ax.set_ylim((0, 100))
+        ax.legend()
+        plt.text(1.1, -0.2, f"Created: {datetime.now():%Y-%m-%d %H:%M %z}",
+                 transform=ax.transAxes,
+                 fontsize='xx-small', ha='right')
+        plt.text(-0.1, -0.2, f"Source: {erasource}",
+                 transform=ax.transAxes,
+                 fontsize='xx-small', ha='left',)
+        fig.tight_layout()
 
-
+        plt.savefig(os.path.join(outputpath, f"pcmin.monmean.{pd.to_datetime(da.time)[0].strftime('%m')}.xarray.png"), bbox_inches='tight')
+        plt.close(fig)
+    """
     for tdx in range(0, 12):
         dt = dts[tdx]
         LOGGER.info(f"Plotting monthly mean PI for {dt.strftime('%B')}")
@@ -107,6 +150,12 @@ def plotMonthlyTrends(inputfile, outputpath, domain):
         ax.set_title(f"Mean potential intensity - {dt.strftime('%B')}")
         ax.set_ylim((0, 100))
         ax.legend()
+        plt.text(1.1, -0.2, f"Created: {datetime.now():%Y-%m-%d %H:%M %z}",
+                 transform=ax.transAxes,
+                 fontsize='xx-small', ha='right')
+        plt.text(-0.1, -0.2, f"Source: {erasource}",
+                 transform=ax.transAxes,
+                 fontsize='xx-small', ha='left',)
         fig.tight_layout()
 
         plt.savefig(os.path.join(outputpath, f"pcmin.monmean.{dt.strftime('%m')}.png"), bbox_inches='tight')
