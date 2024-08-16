@@ -247,12 +247,12 @@ def run(ds):
     out_ds.otl.attrs['units'] = 'hPa'
 
     # Calculate thermodynamic efficiency and disequilibrium:
-    eff = (ds['sst'] - out_ds['t0']) / out_ds['t0']
+    eff = (ds['sst'] - out_ds['t0']) / ds['sst']
     eff = xr.where(eff > 0, eff, 0, keep_attrs=True)
     diseq = out_ds['vmax']**2/(CKCD*eff)
 
     out_ds['eff'] = eff
-    out_ds.eff.attrs['standard_name'] = "Tropical cyclone efficiency"
+    out_ds.eff.attrs['standard_name'] = "Tropical cyclone efficiency (Emanuel, 1995)"
     out_ds.eff.attrs['units'] = "unitless fraction"
 
     out_ds['diseq'] = diseq
