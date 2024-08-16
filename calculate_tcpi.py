@@ -248,6 +248,7 @@ def run(ds):
 
     # Calculate thermodynamic efficiency and disequilibrium:
     eff = (ds['sst'] - out_ds['t0']) / out_ds['t0']
+    eff = xr.where(eff > 0, eff, 0, keep_attrs=True)
     diseq = out_ds['vmax']**2/(CKCD*eff)
 
     out_ds['eff'] = eff
