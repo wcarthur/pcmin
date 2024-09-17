@@ -183,10 +183,15 @@ def processYear(year, basepath, outpath, config):
     subds = ds.sel(longitude=slice(minLon, maxLon),
                    latitude=slice(maxLat, minLat),
                    level=slice(None, None, -1))
+    
+    # Temporary workaround to compute for entire globe at 1x1 degree grid 
+    # spacing:
+    subds = ds.isel(longitude=slice(0, 1440, 4),
+                     latitude=slice(0, 721, 4)).\
+                sel(level=slice(None, None, -1))
     outds = run(subds.chunk(dict(level=-1)))
 
-    outputfile = os.path.join(outpath,
-                              f"pcmin.{year}.nc")
+    outputfile = os.path.join(outpath, f"pcmin.{year}.nc")
 
     LOGGER.info(f"Saving data to {outputfile}")
 
@@ -250,9 +255,11 @@ def run(ds):
     eff = (ds['sst'] - out_ds['t0']) / ds['sst']
     eff = xr.where(eff > 0, eff, 0, keep_attrs=True)
     diseq = out_ds['vmax']**2/(CKCD*eff)
+    diseq = xr.where(eff < 10e-4, np.nan, diseq, keep_attrs=True)
 
     out_ds['eff'] = eff
-    out_ds.eff.attrs['standard_name'] = "Tropical cyclone efficiency (Emanuel, 1995)"
+    out_ds.eff.attrs['standard_name'] = "Tropical cyclone efficiency"
+    out_ds.eff.attrs['long_name'] = "Tropical cyclone efficiency (Emanuel, 1995)"
     out_ds.eff.attrs['units'] = "unitless fraction"
 
     out_ds['diseq'] = diseq
